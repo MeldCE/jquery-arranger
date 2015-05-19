@@ -1,0 +1,108 @@
+var gulp = require('gulp');
+var path = require('path');
+var rename = require('gulp-rename');
+
+var fs = require('fs');
+
+var uglify = require('gulp-uglify');
+var cssMinify = require('gulp-mini-css');
+var lessCss = require('gulp-less');
+var replace = require('gulp-replace');
+var jsValidate = require('gulp-jsvalidate');
+var cssValidate = require('gulp-css-validator');
+var insert = require('gulp-insert');
+var shell = require('gulp-shell');
+var inlining = require('gulp-inlining-node-require');
+//var concat = require('gulp-concat');
+var package = require('./package.json');
+//var watchify = require('gulp-watchify');
+//var streamify = require('gulp-streamify');
+var include = require('../../gulp-include');
+var spawn = require('child_process').spawn;
+var stripLine  = require('gulp-strip-line');
+var tar = require('gulp-tar');
+var gzip = require('gulp-gzip');
+var symlink = require('gulp-symlink');
+var del = require('del');
+
+var paths = {
+	dist: '../dist/',
+	build: '../build/',
+	ext: {},
+	int: ['example.html', 'img/sunset.jpg'],
+	jsSrc: 'js/*.js',
+	cssSrc: 'css/*.css',
+};
+//paths.albums = path.join(paths.dist, 'albums');
+paths.allJsSrc = include.files(paths.jsSrc);
+console.log(paths.allJsSrc);
+paths.js = path.join(paths.dist, 'js');
+paths.css = path.join(paths.dist, 'css');
+
+gulp.task('clean', [], function() {
+	del([
+		path.join(paths.dist, '**'),
+		path.join(paths.build, '**')
+	], {force: true});
+});
+
+gulp.task('validateJs', [], function() {
+	return gulp.src(paths.allJsSrc)
+			.pipe(jsValidate());
+});
+
+gulp.task('js', ['validateJs'], function() {
+	return gulp.src(paths.jsSrc)
+			.pipe(include())
+			.pipe(gulp.dest(paths.js))
+			.pipe(uglify({
+				preserveComments: 'some'
+			}))
+			.pipe(rename(function (path) {
+						path.extname = '.min.js'
+					}))
+			.pipe(gulp.dest(paths.js));
+});
+
+gulp.task('validateCss', ['buildCss'], function() {
+			return gulp.src(paths.builtCss)
+					.pipe(cssValidate());
+		});
+
+gulp.task('buildCss', [], function() {
+			return gulp.src(paths.cssSrc)
+					.pipe(lessCss())
+					.pipe(gulp.dest(paths.builtCssDir));
+		});
+
+//gulp.task('css', ['validateCss'], function() {
+gulp.task('css', ['buildCss'], function() {
+			return gulp.src(paths.builtCss)
+					.pipe(rename(function (path) {
+								path.extname = '.css'
+							}))
+					.pipe(gulp.dest(paths.css))
+					.pipe(cssMinify())
+					.pipe(rename(function (path) {
+								path.extname = '.min.css'
+							}))
+					.pipe(gulp.dest(paths.css));
+		});
+
+gulp.task('intFiles', ['readme'], function() {
+			return gulp.src(paths.int, {base: './'})
+					.pipe(gulp.dest(paths.dist));
+		});
+
+gulp.task('watch', function() {
+	gulp.watch(paths.main, ['markupMainPhp']);
+	gulp.watch(paths.jsSrc, ['js']);
+	gulp.watch(paths.cssSrc, ['css']);
+	gulp.watch(paths.int, ['intFiles']);
+});
+
+var defaultTasks = ['css', 'js', 'intFiles'];
+
+gulp.task('one', defaultTasks);
+
+gulp.task('default', defaultTasks.concat(['watch']));

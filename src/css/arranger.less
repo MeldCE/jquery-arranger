@@ -1,0 +1,80 @@
+#arranger {
+	border: solid 1px #000;
+	width: 80%;
+	min-height: 200px;
+	position: relative;
+}
+
+#arranger > div.pad > div {
+	position: absolute;
+	padding: 0px;
+	cursor: move;
+	border: solid 1px #000;
+}
+
+.t, .r, .b, .l {
+	position: absolute;
+}
+
+.t.toLink, .r.toLink, .b.toLink, .l.toLink {
+	background-color: rgba(0, 255, 0, 0.4);
+}
+
+.t, .b {
+	width: 100%;
+	height: 10px;
+}
+
+.l, .r {
+	height: 100%;
+	width: 10px
+}
+
+.t, .l {
+	top: 0px;
+	left: 0px;
+}
+
+.r, .b {
+	right: 0px;
+	bottom: 0px;
+}
+
+
+.tl, .br, .bl, .tr {
+	position: absolute;
+	width: 30px;
+	height: 30px;
+}
+
+.tl, .tr {
+	top: 0px;
+}
+
+.bl, .br {
+	bottom: 0px;
+}
+
+.tl, .bl {
+	left: 0px;
+}
+
+.tr, .br {
+	right: 0px;
+}
+
+.tl {
+	cursor: nw-resize;
+}
+
+.tr {
+	cursor: ne-resize;
+}
+
+.br {
+	cursor: se-resize;
+}
+
+.bl {
+	cursor: sw-resize;
+}

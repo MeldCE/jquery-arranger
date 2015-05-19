@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+	<head>
+		<script src="js/jquery/jquery.js"></script>
+		<!--script src="js/jquery/ui/core.min.js"></script>
+		<script src="js/jquery/ui/widget.min.js"></script>
+		<script src="js/jquery/ui/resizable.min.js"></script-->
+		<script src="js/arranger.js"></script>
+		<script>
+			jQuery(function($) {
+				$('#arranger').arranger({})
+						.arranger('addImage', {
+							href: '/ngotaxi/wp-content/gHCache/New_sunset-1.JPG',
+							box: [150, 200],
+						})
+						.arranger('addImage', {
+							href: '/ngotaxi/wp-content/gHCache/New_sunset-1.JPG',
+							box: [150, 200],
+						})
+						.arranger('addImage', {
+							href: '/ngotaxi/wp-content/gHCache/New_sunset-1.JPG',
+							box: [150, 200],
+							format: 'crop'
+						});
+			});
+		</script>
+		<link rel="stylesheet" href="css/arranger.css">
+		<link rel="stylesheet" href="css/wp/jquery-ui-dialog.css">
+	</head>
+	<body>
+		<div id="arranger"></div>
+	</body>
+</html>
