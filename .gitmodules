@@ -1,0 +1,3 @@
+[submodule "src/lib/jquery-touch-events"]
+	path = src/lib/jquery-touch-events
+	url = https://github.com/benmajor/jQuery-Touch-Events
