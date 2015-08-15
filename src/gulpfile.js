@@ -38,6 +38,18 @@ paths.allJsSrc = include.files(paths.jsSrc);
 console.log(paths.allJsSrc);
 paths.js = path.join(paths.dist, 'js');
 paths.css = path.join(paths.dist, 'css');
+paths.builtCssDir = path.join(paths.build, 'css');
+paths.builtCss = path.join(paths.build, paths.cssSrc);
+
+// JQuery
+paths.ext.jquery = {
+	js: 'lib/jquery/jquery{.min,}.js',
+};
+
+// JQuery Touch Events
+paths.ext.touchEvents = {
+	js: 'lib/jquery-touch-events/src/jquery.mobile-events{.min,}.js',
+};
 
 gulp.task('clean', [], function() {
 	del([
@@ -89,19 +101,37 @@ gulp.task('css', ['buildCss'], function() {
 					.pipe(gulp.dest(paths.css));
 		});
 
-gulp.task('intFiles', ['readme'], function() {
+gulp.task('intFiles', [], function() {
 			return gulp.src(paths.int, {base: './'})
 					.pipe(gulp.dest(paths.dist));
 		});
+
+for (e in paths.ext) {
+	gulp.task(e, [], (function(e) { return function() {
+		var p;
+		for (p in paths.ext[e]) {
+			gulp.src(paths.ext[e][p], {base: './'})
+					.pipe(rename({dirname: path.join('lib', p)}))
+					.pipe(gulp.dest(paths.dist));
+		}
+	}})(e));
+}
 
 gulp.task('watch', function() {
 	gulp.watch(paths.main, ['markupMainPhp']);
 	gulp.watch(paths.jsSrc, ['js']);
 	gulp.watch(paths.cssSrc, ['css']);
 	gulp.watch(paths.int, ['intFiles']);
+	for (e in paths.ext) {
+		var f, files = [];
+		for (f in paths.ext[e]) {
+			files.push(paths.ext[e][f]);
+		}
+		gulp.watch(files, [e]);
+	}
 });
 
-var defaultTasks = ['css', 'js', 'intFiles'];
+var defaultTasks = ['css', 'js', 'intFiles'].concat(Object.keys(paths.ext));
 
 gulp.task('one', defaultTasks);
 

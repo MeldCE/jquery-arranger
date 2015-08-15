@@ -20,6 +20,7 @@ if(jQuery) (function($){
 		var data = {};
 
 		console.log('startAction called');
+		this.divs.settings.html('startAction called');
 		console.log(ev);
 
 		if (ev) {
@@ -65,12 +66,30 @@ if(jQuery) (function($){
 		initial.finishFn = finishAction.bind(this, id, direction, initial);
 
 		//
-		$('body').mouseup(initial.finishFn);
-		this.divs.pad.mousemove(initial.actionFn);
+		//$('body').bind('tapend', initial.finishFn);
+		//this.divs.pad.bind('tapmove', initial.actionFn);
+		//this.images[id].div.bind('tapend', initial.finishFn);
+		//this.images[id].div.bind('tapmove', initial.actionFn);
+		this.divs.pad.bind('tapend', initial.finishFn);
+		this.divs.pad.bind('tapmove', initial.actionFn);
 	}
 
 	function doResize(id, direction, initial, ev) {
 		console.log('doResize called with direction ' + direction);
+
+		if (ev) {
+			if (ev.isDefaultPrevented()) {
+				return;
+			}
+
+			// Check we have a left mouse button click
+			if (ev.button != 0) {
+				return;
+			}
+
+			ev.preventDefault();
+		}
+
 		// Calculate current delta
 		var deltaX = Math.round(ev.clientX - initial.ev.clientX);
 		var deltaY = Math.round(ev.clientY - initial.ev.clientY);
@@ -122,13 +141,38 @@ if(jQuery) (function($){
 
 	function doMove(id, direction, initial, ev) {
 		console.log('doMove called');
+		this.divs.settings.html('doMove called');
+
+		if (ev) {
+			console.log('doMove called with event');
+			if (ev.isDefaultPrevented()) {
+				return;
+			}
+
+			// Check we have a left mouse button click
+			if (ev.button != 0) {
+				return;
+			}
+
+			ev.preventDefault();
+		}
+
 		// Calculate current delta
 		var deltaX = Math.round(ev.clientX - initial.ev.clientX);
 		var deltaY = Math.round(ev.clientY - initial.ev.clientY);
 
+		// Limit by 0,0 and 100% width bound
+		console.log(this.divs.pad);
+		var offset = this.divs.pad.offset();
+		console.log('max: ' + this.divs.pad.offsetLeft + ' vs ' + (initial.pos.left + deltaX));
+		var left = Math.min(offset.left + this.divs.pad.width()
+				- this.images[id].div.width(), Math.max(offset.left,
+				(initial.pos.left + deltaX)));
+		var top = Math.max(offset.top, (initial.pos.top + deltaY));
+
 		this.images[id].div.offset({
-			left: (initial.pos.left + deltaX),
-			top: (initial.pos.top + deltaY)
+			left: left,
+			top: top
 		});
 
 		calculateNewLinks.call(this, id, direction);
@@ -150,15 +194,23 @@ if(jQuery) (function($){
 		console.log(this.divs.pad.off);
 		console.log(initial);
 		//this.divs.pad.unbind(initial.actionFn);
-		this.divs.pad.unbind('mousemove');
+		//this.divs.pad.unbind('tapmove');
+		this.images[id].div.unbind('tapmove');
 		//$('body').unbind(initial.finishFn);
-		$('body').unbind('mouseup');
-		
+		//$('body').unbind('tapend');
+		this.divs.pad.unbind('tapmove');
+		this.divs.pad.unbind('tapend');
+	
+		console.log(this.images[id].div.offset());
+
 		calculateNewLinks.call(this, id, direction, true);
+		console.log(this.images[id].div.offset());
 		resizeArranger.call(this, true);
 
+		console.log(this.images[id].div.offset());
 		updateImageData.call(this, id);
 
+		console.log(this.images[id].div.offset());
 		if (direction === null) {
 			if (this.events.finishMove) {
 				for (i in this.events.finishMove) {
@@ -277,6 +329,9 @@ if(jQuery) (function($){
 				t: offset.top,
 				b: offset.top + this.images[i].div.height()
 			};
+
+			console.log(i);
+			console.log(cpos);
 
 			// Horizontal sides
 			if (ipos.t !== -1) {
@@ -641,7 +696,12 @@ if(jQuery) (function($){
 					+ '</button>').click(function () { this.actions[i].func(ref); }));
 		}
 	}
-	
+
+	function padTap(ev) {
+		console.log(ev);
+		this.divs.settings.append(ev.type);
+	}
+
 	/** Prototype for the arranger object
 	 *
 	 * @param div {JQueryDOMObject} Object to make into the arranger.
@@ -652,9 +712,16 @@ if(jQuery) (function($){
 		this.images = [];
 		this.divs = {};
 
+		/**
+		 * @prop actions {Array} 
+		 */
 		this.options = $.extend({
 			actions: [],
 		}, options);
+
+		console.log('making arranger');
+		console.log(div);
+		console.log(this.options);
 
 		this.events = {
 			preMove: [],
@@ -687,7 +754,15 @@ if(jQuery) (function($){
 
 		createSettingsHTML.call(this);
 
+		this.divs.pad.bind('tapstart', padTap.bind(this));
+		this.divs.pad.bind('tapmove', padTap.bind(this));
+		this.divs.pad.bind('tapend', padTap.bind(this));
+
 		//div.resizable();
+
+		if (this.options.images) {
+			this.addImage(this.options.images);
+		}
 	}
 
 	Arranger.prototype = {
@@ -738,12 +813,17 @@ if(jQuery) (function($){
 					this.divs.pad.append((image.div = $('<div '
 							+ 'style="background: url(\'' + images[i].href + '\');' 
 							+ 'background-repeat: no-repeat;"></div>')
-							.mousedown(startAction.bind(this, id, doMove, null))));
+							.bind('tapstart', startAction.bind(this, id, doMove, null))));
 
 					/// @todo Get image size?
 					// this would not be related to the actual image size, but the size
 					// of the div, so can't get the image ratio off of it.
-					image.image.size = [image.image.box[0], image.image.box[1]];
+					console.log(image);
+					if (image.image.width && image.image.height) {
+						image.image.size = [image.image.width, image.image.height];
+					} else if (image.image.box) {
+						image.image.size = image.image.box;
+					}
 
 					// Determine ratio
 					image.ratio = image.image.size[0] / image.image.size[1];
@@ -939,10 +1019,13 @@ if(jQuery) (function($){
 			console.log('arranger called');
 			console.log(cmd);
 			if (cmd instanceof Object) {
+				console.log('have an object');
 				$(this).each(function() {
+					console.log('in each');
 					if (!$(this).data(dataKey)
 							|| !($(this).data(dataKey) instanceof Arranger)) {
-						$(this).data(dataKey, new Arranger($(this)));
+						console.log('making arranger');
+						$(this).data(dataKey, new Arranger($(this), cmd));
 					}
 				});
 			} else if (typeof cmd == "string") {
