@@ -529,22 +529,24 @@ if(jQuery) (function($){
 
 		//console.log('actionLinks called, direction is ' + direction);
 
-		/** @todo! Resizing is not working as it should - on ratio images, only
-		 *  one side is moved/resized.
-		 *  Might need to have new variables to store new values of the position
-		 *  and offset and at the end check if the size has been changed in one
-		 *  direction and adjust other direction if a ratio image
-		 */
-
-
-		// Define set order for sides
-		var fixed = {
-			t: 0,
-			l: 0,
-			b: 0,
-			r: 0
+		var newDimensions = {
+			dimension: [-1, -1],
+			offset: {left: -1, top: -1}
 		};
-		
+		var currentDimensions = {
+			dimension: [this.data[id].div.width(), this.data[id].div.height()],
+			offset: this.data[id].div.offset()
+		};
+	
+		//console.log(links);
+		//console.log(currentDimensions);
+
+		//console.log('prelink');
+		//console.log('dimension (x x y) ' + newDimensions.dimension[0] + ' x '
+		//		+ newDimensions.dimension[1]);
+		//console.log('offset (l x t) ' + newDimensions.offset.left + ' x '
+		//		+ newDimensions.offset.top);
+
 		if (links) {
 			//console.log('have links');
 			//console.log(links);
@@ -552,16 +554,27 @@ if(jQuery) (function($){
 			// Top
 			if (links['t']) {
 				for (i in links['t']) {
+					//console.log('got top link for ' + i + ': ' + links['t'][i]);
+					//console.log(this.data[i].div.offset());
+					//console.log('w ' + this.data[i].div.width()
+					//		+ ' h ' + this.data[i].div.height());
 					// Move to align with other div
-					if (links['t'][i] == 't') {
-						this.data[id].div.offset({top: this.data[i].div.offset().top});
-					} else {
-						this.data[id].div.offset({
-								top: this.data[i].div.offset().top
-								+ this.data[i].div.height() + spacing});
+					if (links['t'][i] == 't') { // Move top to top of linked
+						//console.log('Move top to top side of linked');
+						newDimensions.offset.top = this.data[i].div.offset().top;
+					} else { // Move top to bottom of linked
+						//console.log('Move top to bottom side of linked');
+						newDimensions.offset.top = this.data[i].div.offset().top
+								+ this.data[i].div.height() + spacing
 					}
 
-					fixed.t = 1;
+					// Resize if we are resizing from the top side
+					if (direction && direction.search(/t/) !== -1) {
+						newDimensions.dimension[1] = currentDimensions.dimension[1]
+								+ (currentDimensions.offset.top - newDimensions.offset.top);
+					}
+
+					// Don't bother with the other links (hopefully they are the same)
 					break;
 				}
 			}
@@ -570,73 +583,178 @@ if(jQuery) (function($){
 			if (links['l']) {
 				for (i in links['l']) {
 					// Move to align with other div
-					if (links['l'][i] == 'l') {
-						this.data[id].div.offset({left: this.data[i].div.offset().left});
-					} else {
-						this.data[id].div.offset({
-								left: this.data[i].div.offset().left
-								+ this.data[i].div.width() + spacing});
+					if (links['l'][i] == 'l') { // Move left to left side of linked
+						//console.log('Move left to left side of linked');
+						newDimensions.offset.left = this.data[i].div.offset().left;
+					} else { // Move left to right side of linked
+						//console.log('Move left to right side of linked');
+						newDimensions.offset.left = this.data[i].div.offset().left
+								+ this.data[i].div.width() + spacing
 					}
 
-					fixed.l = 1;
+					// Resize if we are resizing from the top side
+					if (direction && direction.search(/l/) !== -1) {
+						newDimensions.dimension[0] = currentDimensions.dimension[0]
+								+ (currentDimensions.offset.left - newDimensions.offset.left);
+					}
+
+					// Don't bother with the other links (hopefully they are the same)
 					break;
 				}
 			}
 
 			// Right
-			if (links['r'] && fixed.r === 0) {
+			if (links['r']) {
 				for (i in links['r']) {
-					// Determine bottom position
-					if (links['r'][i] == 'l') {
-						pos = this.data[i].div.offset().left - spacing;
-					} else {
-						pos = this.data[i].div.offset().left + this.data[i].div.width();
-					}
+					// Resize the image if the resizing or the offset has been updated
+					if (newDimensions.offset.left !== -1 
+							|| (direction && direction.search(/r/) !== -1)) {
+						var offset = (newDimensions.offset.left !== -1 ?
+								newDimensions.offset.left : currentDimensions.offset.left);
 
-					// Resize if top fixed or resizing from bottom, else move
-					if (fixed.l || (direction && direction.search(/r/) !== -1)) {
-						var width = pos - this.data[id].div.offset().left;
-						this.data[id].div.width(width);
+						//console.log('in right link');
+						//console.log(offset);
 
-						// Resize right if fixed ratio
-						if (this.data[id].format === 'ratio') {
-							this.data[id].div.height(width / this.data[id].ratio);
-							fixed.r = 1;
+						if (links['r'][i] == 'l') { // Resize width to line up with left side of linked
+							//console.log('Resize width to line up with left side of linked');
+							newDimensions.dimension[0] = this.data[i].div.offset().left
+									- spacing - offset;
+						} else { // Resize width to line up with right side of linked
+							//console.log('Resize width to line up with right side of linked');
+							newDimensions.dimension[0] = this.data[i].div.offset().left
+									+ this.data[i].div.width() - offset; 
 						}
-					} else {
-						this.data[id].div.offset({left: pos - this.data[id].div.width()});
+					} else { // Move the image to match up
+						var dimension = (newDimensions.dimension[0] !== -1 ?
+								newDimensions.dimension[0] : currentDimensions.dimension[0]);
+
+						if (links['r'][i] == 'l') { // Move right to left side of linked
+							//console.log('Move right to left side of linked');
+							newDimensions.offset.left = this.data[i].div.offset().left
+									- spacing - dimension;
+						} else { // Move right to right side of linked
+							//console.log('Move right to right side of linked');
+							newDimensions.offset.left = this.data[i].div.offset().left
+									+ this.data[i].div.width() - dimension;
+						}
 					}
 
-					fixed.r = 1;
+					// Don't bother with the other links (hopefully they are the same)
+					break;
 				}
 			}
 
 			// Bottom
-			if (links['b'] && fixed.b === 0) {
+			if (links['b']) {
 				for (i in links['b']) {
-					// Determine bottom position
-					if (links['b'][i] == 't') {
-						pos = this.data[i].div.offset().top - spacing;
-					} else {
-						pos = this.data[i].div.offset().top + this.data[i].div.height();
-					}
+					//console.log('got bottom link for ' + i + ': ' + links['b'][i]);
+					//console.log(this.data[i].div.offset());
+					//console.log('w ' + this.data[i].div.width()
+					//		+ ' h ' + this.data[i].div.height());
+					// Resize the image if the resizing or the offset has been updated
+					if (newDimensions.offset.top !== -1 
+							|| (direction && direction.search(/b/) !== -1)) {
+						var offset = (newDimensions.offset.top !== -1 ?
+								newDimensions.offset.top : currentDimensions.offset.top);
 
-					// Resize if top fixed or resizing from bottom, else move
-					if (fixed.t || (direction && direction.search(/b/) !== -1)) {
-						var height = pos - this.data[id].div.offset().top;
-						this.data[id].div.height(height);
+						//console.log('in bottom link');
+						//console.log(offset);
 
-						// Resize right if fixed ratio
-						if (this.data[id].format === 'ratio') {
-							this.data[id].div.width(height * this.data[id].ratio);
-							fixed.r = 1;
+						if (links['b'][i] == 't') { // Resize height to line up with top side of linked
+							//console.log('Resize height to line up with top side of linked');
+							newDimensions.dimension[1] = this.data[i].div.offset().top
+									- spacing - offset;
+						} else { // Resize height to line up with bottom side of linked
+							//console.log('Resize height to line up with bottom side of linked');
+							newDimensions.dimension[1] = this.data[i].div.offset().top
+									+ this.data[i].div.height() - offset; 
 						}
-					} else {
-						this.data[id].div.offset({top: pos - this.data[id].div.height()});
+					} else { // Move the image to match up
+						var dimension = (newDimensions.dimension[1] !== -1 ?
+								newDimensions.dimension[1] : currentDimensions.dimension[1]);
+
+						//console.log('in bottom link');
+						//console.log(dimension);
+
+						if (links['b'][i] == 't') { // Move so bottom is aligned with top side of linked
+							//console.log('Move so bottom is aligned with top side of linked');
+							newDimensions.offset.top = this.data[i].div.offset().top
+									- spacing - dimension;
+						} else { // Move so bottom is aligned with bottom side of linked
+							//console.log('Move so bottom is aligned with bottom side of linked');
+							newDimensions.offset.top = this.data[i].div.offset().top
+									+ this.data[i].div.height() - dimension;
+						}
 					}
 
-					fixed.b = 1;
+					// Don't bother with the other links (hopefully they are the same)
+					break;
 				}
+			}
+
+			//console.log('unfixed');
+			//console.log('dimension (x x y) ' + newDimensions.dimension[0] + ' x '
+			//		+ newDimensions.dimension[1]);
+			//console.log('offset (l x t) ' + newDimensions.offset.left + ' x '
+			//		+ newDimensions.offset.top);
+
+			// Force correct ratio if we changed a dimension (height priority)
+			if (this.images[id].format === 'ratio') {
+				var dimension;
+				if (newDimensions.dimension[1] !== -1) {
+					ratioDim = newDimensions.dimension[1] * this.data[id].ratio;
+					var dimension = (newDimensions.dimension[0] !== -1 ?
+							newDimensions.dimension[0] : currentDimensions.dimension[0]);
+					if (ratioDim !== dimension) {
+						newDimensions.dimension[0] = ratioDim;
+						// Resize to the left if resizing left or right is linked
+						if ((!links['l'] && links['r']) || (direction && direction.search(/l/) !== -1)) {
+							var offset = (newDimensions.offset.left !== -1 ?
+									newDimensions.offset.left : currentDimensions.offset.left);
+
+							newDimensions.offset.left = offset + (dimension - ratioDim);
+						}
+					}
+				} else if (newDimensions.dimension[0] !== -1) {
+					ratioDim = newDimensions.dimension[0] * this.data[id].ratio;
+					var dimension = (newDimensions.dimension[1] !== -1 ?
+							newDimensions.dimension[1] : currentDimensions.dimension[1]);
+					if (ratioDim !== dimension) {
+						newDimensions.dimension[1] = ratioDim;
+						// Resize up if resizing up or bottom is linked
+						if ((!links['t'] && links['b']) || (direction && direction.search(/i/) !== -1)) {
+							var offset = (newDimensions.offset.top !== -1 ?
+									newDimensions.offset.top : currentDimensions.offset.top);
+
+							newDimensions.offset.top = offset + (dimension - ratioDim);
+						}
+					}
+				}
+			}
+
+			//console.log(newDimensions);
+
+			// Set new values
+			if (newDimensions.dimension[0] !== -1) {
+				this.data[id].div.width(newDimensions.dimension[0]);
+			}
+			
+			if (newDimensions.dimension[1] !== -1) {
+				this.data[id].div.height(newDimensions.dimension[1]);
+			}
+			
+			var offset = {}, set = false;
+			if (newDimensions.offset.top !== -1) {
+				offset.top = newDimensions.offset.top;
+				set = true;
+			}
+			if (newDimensions.offset.left !== -1) {
+				offset.left = newDimensions.offset.left;
+				set = true;
+			}
+			
+			if (set) {
+				this.data[id].div.offset(offset);
 			}
 		}
 	}
@@ -875,9 +993,13 @@ if(jQuery) (function($){
 
 		createSettingsHTML.call(this);
 
+		var doc;
+		if (!((doc = this.divs.pad.closest('document')).length)) {
+			doc = this.divs.pad;
+		}
 		this.divs.pad.bind('tapstart', padStart.bind(this));
-		this.divs.pad.bind('tapmove', padMove.bind(this));
-		this.divs.pad.bind('tapend', padEnd.bind(this));
+		doc.bind('tapmove', padMove.bind(this));
+		doc.bind('tapend', padEnd.bind(this));
 
 		if (this.options.images) {
 			if (this.options.percent) {
@@ -939,7 +1061,7 @@ if(jQuery) (function($){
 
 					this.divs.pad.append((this.data[id].div = $('<div '
 							+ 'style="background: url(\'' + images[i].href + '\');' 
-							+ 'background-repeat: no-repeat;"></div>')
+							+ 'position: absolute; background-repeat: no-repeat;"></div>')
 							.attr('data-arranger-image-id', id)
 							.data('arrangerImageId', id)
 							));

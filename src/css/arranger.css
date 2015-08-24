@@ -2,13 +2,16 @@
 	border: solid 1px #000;
 	width: 80%;
 	min-height: 200px;
-	position: relative;
 
-	> div.pad > div {
+	> div.pad {
+		position: relative;
+
+		> div {
 		position: absolute;
 		padding: 0px;
 		cursor: move;
 		border: solid 1px #000;
+		}
 	}
 
 	.t, .r, .b, .l {
