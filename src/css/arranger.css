@@ -1,4 +1,4 @@
-#arranger {
+.arranger {
 	border: solid 1px #000;
 	width: 80%;
 	min-height: 200px;
@@ -44,6 +44,7 @@
 		position: absolute;
 		width: 30px;
 		height: 30px;
+		background-color: rgba(255, 255, 255, .1);
 	}
 
 	.tl, .tr {

@@ -13,69 +13,8 @@ if(jQuery) (function($){
 		console.error('Arranger: ' + message);
 	}
 
-	/**
-	 * Called to start the resize of an image
-	 */
-	function startAction(id, func, direction, ev) {
-		var data = {};
-
-		console.log('startAction called');
-		this.divs.settings.html('startAction called');
-		console.log(ev);
-
-		if (ev) {
-			if (ev.isDefaultPrevented()) {
-				return;
-			}
-
-			// Check we have a left mouse button click
-			if (ev.button != 0) {
-				return;
-			}
-
-			ev.preventDefault();
-		}
-
-		// Run (and possibly exit) event handlers
-		if (direction === null) {
-			if (this.events.preMove) {
-				for (i in this.events.preMove) {
-					if (this.events.preMove[i](this.images[id].image) === false) {
-						return;
-					}
-				}
-			}
-		} else {
-			if (this.events.preResize) {
-				for (i in this.events.preResize) {
-					if (this.events.preResize[i](this.images[id].image) === false) {
-						return;
-					}
-				}
-			}
-		}
-
-		var initial = {
-			ev: ev,
-			width: this.images[id].div.width(),
-			height: this.images[id].div.height(),
-			pos: this.images[id].div.position()
-		};
-
-		initial.actionFn = func.bind(this, id, direction, initial);
-		initial.finishFn = finishAction.bind(this, id, direction, initial);
-
-		//
-		//$('body').bind('tapend', initial.finishFn);
-		//this.divs.pad.bind('tapmove', initial.actionFn);
-		//this.images[id].div.bind('tapend', initial.finishFn);
-		//this.images[id].div.bind('tapmove', initial.actionFn);
-		this.divs.pad.bind('tapend', initial.finishFn);
-		this.divs.pad.bind('tapmove', initial.actionFn);
-	}
-
-	function doResize(id, direction, initial, ev) {
-		console.log('doResize called with direction ' + direction);
+	function doResize(id, direction, initial, ev, touch) {
+		//console.log('doResize called with direction ' + direction);
 
 		if (ev) {
 			if (ev.isDefaultPrevented()) {
@@ -91,14 +30,16 @@ if(jQuery) (function($){
 		}
 
 		// Calculate current delta
-		var deltaX = Math.round(ev.clientX - initial.ev.clientX);
-		var deltaY = Math.round(ev.clientY - initial.ev.clientY);
+		//var deltaX = Math.round(ev.clientX - initial.ev.clientX);
+		//var deltaY = Math.round(ev.clientY - initial.ev.clientY);
+		var deltaX = Math.round(touch.position.x - initial.offset.x);
+		var deltaY = Math.round(touch.position.y - initial.offset.y);
 		var delta;
 
-		console.log('Deltas are: ' + deltaX + ', ' + deltaY);
+		//console.log('Deltas are: ' + deltaX + ', ' + deltaY);
 
 		// If fixed ratio, determine the maximum relative to the image ratio
-		if (this.images[id].image.format === 'ratio') {
+		if (this.images[id].format === 'ratio') {
 			var mul = 1, nul = 1;
 
 			if (direction === 'bl' || direction === 'tr') {
@@ -107,70 +48,85 @@ if(jQuery) (function($){
 
 			// Average out the two deltas
 			var delta = (deltaY + (deltaX * mul)) / 2;
-			deltaY =  Math.round(delta / this.images[id].ratio);
+			deltaY =  Math.round(delta / this.data[id].ratio);
 			deltaX = delta * mul;
 
-			console.log('Using fixed ratio delta ');
+			//console.log('Using fixed ratio delta ');
 		}
 
 		// Handle x dimension
 		if (direction.search(/l/) !== -1) {
-			console.log('have a left puller');
+			//console.log('have a left puller');
 			// Move x and then resize x
-			this.images[id].div.offset({left: (initial.pos.left + deltaX)});
-			this.images[id].div.width(initial.width - deltaX);
-			//this.images[id].div.x(
+			this.data[id].div.offset({left: (initial.pos.left + deltaX)});
+			this.data[id].div.width(initial.width - deltaX);
+			//this.data[id].div.x(
 		} else if (direction.search(/r/) !== -1) {
-			console.log('have a right puller');
-			this.images[id].div.width(initial.width + deltaX);
+			//console.log('have a right puller');
+			this.data[id].div.width(initial.width + deltaX);
 		}
 
 		// Handle y dimension
 		if (direction.search(/t/) !== -1) {
 			// Move x and then resize x
-			this.images[id].div.offset({top: (initial.pos.top + deltaY)});
-			this.images[id].div.height(initial.height - deltaY);
-			//this.images[id].div.x(
+			this.data[id].div.offset({top: (initial.pos.top + deltaY)});
+			this.data[id].div.height(initial.height - deltaY);
+			//this.data[id].div.x(
 		} else if (direction.search(/b/) !== -1) {
-			this.images[id].div.height(initial.height + deltaY);
+			this.data[id].div.height(initial.height + deltaY);
 		}
 
 		calculateNewLinks.call(this, id, direction);
 		resizeArranger.call(this);
 	}
 
-	function doMove(id, direction, initial, ev) {
-		console.log('doMove called');
+	function doMove(id, direction, initial, ev, touch) {
+		//console.log('doMove called');
 		this.divs.settings.html('doMove called');
 
 		if (ev) {
-			console.log('doMove called with event');
+			//console.log('doMove called with event');
 			if (ev.isDefaultPrevented()) {
 				return;
 			}
 
 			// Check we have a left mouse button click
-			if (ev.button != 0) {
+			if (!(ev.button === undefined || ev.button === 0)) {
 				return;
 			}
 
 			ev.preventDefault();
 		}
 
+		//console.log(initial);
+		//console.log(ev);
+		//console.log(touch);
+
 		// Calculate current delta
-		var deltaX = Math.round(ev.clientX - initial.ev.clientX);
-		var deltaY = Math.round(ev.clientY - initial.ev.clientY);
+		/* touch.offset is the position relative to the
+		 */
+		//var deltaX = Math.round(ev.clientX - initial.ev.clientX);
+		//var deltaY = Math.round(ev.clientY - initial.ev.clientY);
+		//var deltaX = Math.round(touch.offset.x - initial.offset.x);
+		//var deltaY = Math.round(touch.offset.y - initial.offset.y);
+		var deltaX = Math.round(touch.position.x - initial.offset.x);
+		var deltaY = Math.round(touch.position.y - initial.offset.y);
+
+		//console.log('delta: ' + deltaX + ' : ' + deltaY);
+		//console.log(initial);
+		//console.log(initial.pos.left);
 
 		// Limit by 0,0 and 100% width bound
-		console.log(this.divs.pad);
+		//console.log(this.divs.pad);
+		//console.log(this.divs.pad.offset());
 		var offset = this.divs.pad.offset();
-		console.log('max: ' + this.divs.pad.offsetLeft + ' vs ' + (initial.pos.left + deltaX));
+		//console.log('max: ' + offset.left + ' vs ' + (initial.pos.left + deltaX));
 		var left = Math.min(offset.left + this.divs.pad.width()
-				- this.images[id].div.width(), Math.max(offset.left,
+				- this.data[id].div.width(), Math.max(offset.left,
 				(initial.pos.left + deltaX)));
 		var top = Math.max(offset.top, (initial.pos.top + deltaY));
 
-		this.images[id].div.offset({
+		this.data[id].div.offset({
 			left: left,
 			top: top
 		});
@@ -179,8 +135,89 @@ if(jQuery) (function($){
 		resizeArranger.call(this);
 	}
 
+	function relativisePositions() {
+		// Store the minimum x and y values so can start the values from 0,0
+		var minX = -1, minY = -1;
+		var maxX = 0, maxY = 0;
+
+		var images = [];
+
+		var i, offset, div;
+
+		for (i in this.images) {
+			// Update image data
+			updateImageData.call(this, i);
+
+			images[i] = this.images[i];
+
+			//updateImageData.call(this, i);
+
+			// Check and set new minimum x and y values
+			if (minX === -1 || images[i].position[0] < minX) {
+				minX  = images[i].position[0];
+			}
+
+			if (minY === -1 || images[i].position[1] < minY) {
+				minY  = images[i].position[1];
+			}
+
+			// Check maximums
+			maxX = Math.max(maxX, images[i].position[0] + images[i].box[0]);
+			maxY = Math.max(maxY, images[i].position[1] + images[i].box[1]);
+		}
+
+		maxX = (maxX - minX) / 100;
+		maxY = (maxY - minY) / 100;
+		
+		for (i in images) {
+			// Zero positions if not 0 anyway
+			if (minX > 0 || minY > 0) {
+				if (minX > 0) {
+					images[i].position[0] -= minX;
+				}
+
+				if (minY > 0) {
+					images[i].position[1] -= minY;
+				}
+			}
+
+			// Make relative to maximum
+			images[i].position[0] = images[i].position[0] / maxX;
+			images[i].position[1] = images[i].position[1] / maxX;
+			images[i].box[0] = images[i].box[0] / maxX;
+			images[i].box[1] = images[i].box[1] / maxX;
+		}
+	}
+
+	function unrelativisePositions(images) {
+		// Store the minimum x and y values so can start the values from 0,0
+		var width = this.divs.pad.width() - 2;
+		var i;
+
+		//console.log('unrelativise with width' + width);
+
+		for (i in images) {
+			if (images[i].box) {
+				images[i].box[0] = images[i].box[0] / 100 * width;
+				images[i].box[1] = images[i].box[1] / 100 * width;
+			}
+
+			if (images[i].position) {
+				images[i].position[0] = images[i].position[0] / 100 * width;
+				images[i].position[1] = images[i].position[1] / 100 * width;
+			}
+
+			/* @todo the others
+			if (images[i].) {
+				images[i].[0] = images[i].[0] / 100 * width;
+				images[i].[0] = images[i].[0] / 100 * width;
+			}
+			*/
+		}
+	}
+
 	function finishAction(id, direction, initial, ev) {
-		console.log('finishAction called');
+		//console.log('finishAction called');
 
 		if (ev) {
 			if (ev.isDefaultPrevented()) {
@@ -189,45 +226,36 @@ if(jQuery) (function($){
 
 			ev.preventDefault()
 		}
-
-		// Need to be able to remove the binds
-		console.log(this.divs.pad.off);
-		console.log(initial);
-		//this.divs.pad.unbind(initial.actionFn);
-		//this.divs.pad.unbind('tapmove');
-		this.images[id].div.unbind('tapmove');
-		//$('body').unbind(initial.finishFn);
-		//$('body').unbind('tapend');
-		this.divs.pad.unbind('tapmove');
-		this.divs.pad.unbind('tapend');
 	
-		console.log(this.images[id].div.offset());
+		//console.log(this.data[id].div.offset());
 
 		calculateNewLinks.call(this, id, direction, true);
-		console.log(this.images[id].div.offset());
+		//console.log(this.data[id].div.offset());
 		resizeArranger.call(this, true);
 
-		console.log(this.images[id].div.offset());
+		//console.log(this.data[id].div.offset());
 		updateImageData.call(this, id);
 
-		console.log(this.images[id].div.offset());
+		relativisePositions.call(this);
+
+		//console.log(this.data[id].div.offset());
 		if (direction === null) {
 			if (this.events.finishMove) {
 				for (i in this.events.finishMove) {
-					this.events.finishMove[i](this.images[id].image);
+					this.events.finishMove[i](this.images);
 				}
 			}
 		} else {
 			if (this.events.finishResize) {
 				for (i in this.events.finishResize) {
-					this.events.finishResize[i](this.images[id].image);
+					this.events.finishResize[i](this.images);
 				}
 			}
 		}
 
 		if (this.events.finishAction) {
 			for (i in this.events.finishAction) {
-				this.events.finishAction[i](this.images[id].image);
+				this.events.finishAction[i](this.images);
 			}
 		}
 	}
@@ -243,8 +271,8 @@ if(jQuery) (function($){
 	 * @param finalise {boolean} If, true, links will be set.
 	 */
 	function calculateNewLinks(id, direction, finalise) {
-		console.log('calculateNewLinks called with ' + id + ', ' + direction
-				+ ', ' + finalise);
+		//console.log('calculateNewLinks called with ' + id + ', ' + direction
+		//		+ ', ' + finalise);
 		
 		var i, j, k;
 
@@ -279,7 +307,7 @@ if(jQuery) (function($){
 			r: -1
 		};
 
-		var offset = this.images[id].div.offset();
+		var offset = this.data[id].div.offset();
 
 		// Set up the positions
 		if (direction === null || direction.search(/l/) !== -1) {
@@ -287,7 +315,7 @@ if(jQuery) (function($){
 		}
 
 		if (direction === null || direction.search(/r/) !== -1) {
-			pos.r = offset.left + this.images[id].div.width();
+			pos.r = offset.left + this.data[id].div.width();
 		}
 
 		if (direction === null || direction.search(/t/) !== -1) {
@@ -295,7 +323,7 @@ if(jQuery) (function($){
 		}
 
 		if (direction === null || direction.search(/b/) !== -1) {
-			pos.b = offset.top + this.images[id].div.height();
+			pos.b = offset.top + this.data[id].div.height();
 		}
 
 		var cpos, ipos;
@@ -304,7 +332,7 @@ if(jQuery) (function($){
 			// Remove toLink class from all
 			if (finalise) {
 				for (k in pos) {
-					this.images[i][k].removeClass('toLink');
+					this.data[i][k].removeClass('toLink');
 				}
 			}
 
@@ -320,18 +348,18 @@ if(jQuery) (function($){
 				b: pos.b
 			};
 
-			offset = this.images[i].div.offset();
+			offset = this.data[i].div.offset();
 
 			// Set up current image positions
 			cpos = {
 				l: offset.left,
-				r: offset.left + this.images[i].div.width(),
+				r: offset.left + this.data[i].div.width(),
 				t: offset.top,
-				b: offset.top + this.images[i].div.height()
+				b: offset.top + this.data[i].div.height()
 			};
 
-			console.log(i);
-			console.log(cpos);
+			//console.log(i);
+			//console.log(cpos);
 
 			// Horizontal sides
 			if (ipos.t !== -1) {
@@ -343,7 +371,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['t'][i] = 't';
 
-						this.images[i].links['t'][id] = 't';
+						this.data[i].links['t'][id] = 't';
 					}
 				} else if (cpos.b >= ipos.t - spacing && cpos.b <= ipos.t + spacing) {
 					cpos.b = -1;
@@ -353,7 +381,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['t'][i] = 'b';
 
-						this.images[i].links['b'][id] = 't';
+						this.data[i].links['b'][id] = 't';
 					}
 				}
 			}
@@ -368,7 +396,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['b'][i] = 't';
 
-						this.images[i].links['t'][id] = 'b';
+						this.data[i].links['t'][id] = 'b';
 					}
 				} else if (cpos.b !== -1 && cpos.b >= ipos.b - spacing
 						&& cpos.b <= ipos.b + spacing) {
@@ -379,7 +407,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['b'][i] = 'b';
 
-						this.images[i].links['b'][id] = 'b';
+						this.data[i].links['b'][id] = 'b';
 					}
 				}
 			}
@@ -395,7 +423,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['l'][i] = 'l';
 
-						this.images[i].links['l'][id] = 'l';
+						this.data[i].links['l'][id] = 'l';
 					}
 				} else if (cpos.r >= ipos.l - spacing && cpos.r <= ipos.l + spacing) {
 					cpos.r = -1;
@@ -405,7 +433,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['l'][i] = 'r';
 
-						this.images[i].links['r'][id] = 'l';
+						this.data[i].links['r'][id] = 'l';
 					}
 				}
 			}
@@ -421,7 +449,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['r'][i] = 'l';
 
-						this.images[i].links['l'][id] = 'r';
+						this.data[i].links['l'][id] = 'r';
 					}
 				} else if (cpos.r !== -1 && cpos.r >= ipos.r - spacing
 						&& cpos.r <= ipos.r + spacing) {
@@ -432,7 +460,7 @@ if(jQuery) (function($){
 					if (finalise) {
 						newLinks['r'][i] = 'r';
 
-						this.images[i].links['r'][id] = 'r';
+						this.data[i].links['r'][id] = 'r';
 					}
 				}
 			}
@@ -441,17 +469,17 @@ if(jQuery) (function($){
 			for (j in cpos) {
 				// Add/remove class and link
 				if (cpos[j] === -1) {
-					if (!this.images[i][j].hasClass(linkClass)) {
-						this.images[i][j].addClass(linkClass);
+					if (!this.data[i][j].hasClass(linkClass)) {
+						this.data[i][j].addClass(linkClass);
 					}
 				} else {
-					if (this.images[i][j].hasClass(linkClass)) {
-						this.images[i][j].removeClass(linkClass);
+					if (this.data[i][j].hasClass(linkClass)) {
+						this.data[i][j].removeClass(linkClass);
 					}
 
 					if (finalise) {
-						if (this.images[i].links[j][id]) {
-							delete this.images[i].links[j][id];
+						if (this.data[i].links[j][id]) {
+							delete this.data[i].links[j][id];
 						}
 					}
 				}
@@ -462,12 +490,12 @@ if(jQuery) (function($){
 		for (j in link) {
 			// Add/remove class and link
 			if (link[j] === 1) {
-				if (!this.images[id][j].hasClass(linkClass)) {
-					this.images[id][j].addClass(linkClass);
+				if (!this.data[id][j].hasClass(linkClass)) {
+					this.data[id][j].addClass(linkClass);
 				}
 			} else {
-				if (this.images[id][j].hasClass(linkClass)) {
-					this.images[id][j].removeClass(linkClass);
+				if (this.data[id][j].hasClass(linkClass)) {
+					this.data[id][j].removeClass(linkClass);
 				}
 			}
 		}
@@ -479,11 +507,11 @@ if(jQuery) (function($){
 			// Merge in the new Links
 			for (i in pos) {
 				if (pos[i] !== -1) {
-					this.images[id].links[i] = newLinks[i];
+					this.data[id].links[i] = newLinks[i];
 				}
 			}
 
-			console.log(this.images[id].links);
+			//console.log(this.data[id].links);
 		}
 	}
 
@@ -499,7 +527,15 @@ if(jQuery) (function($){
 	function actionLinks(id, direction, links) {
 		var i, j, s, pos;
 
-		console.log('actionLinks called, direction is ' + direction);
+		//console.log('actionLinks called, direction is ' + direction);
+
+		/** @todo! Resizing is not working as it should - on ratio images, only
+		 *  one side is moved/resized.
+		 *  Might need to have new variables to store new values of the position
+		 *  and offset and at the end check if the size has been changed in one
+		 *  direction and adjust other direction if a ratio image
+		 */
+
 
 		// Define set order for sides
 		var fixed = {
@@ -510,19 +546,19 @@ if(jQuery) (function($){
 		};
 		
 		if (links) {
-			console.log('have links');
-			console.log(links);
+			//console.log('have links');
+			//console.log(links);
 
 			// Top
 			if (links['t']) {
 				for (i in links['t']) {
 					// Move to align with other div
 					if (links['t'][i] == 't') {
-						this.images[id].div.offset({top: this.images[i].div.offset().top});
+						this.data[id].div.offset({top: this.data[i].div.offset().top});
 					} else {
-						this.images[id].div.offset({
-								top: this.images[i].div.offset().top
-								+ this.images[i].div.height() + spacing});
+						this.data[id].div.offset({
+								top: this.data[i].div.offset().top
+								+ this.data[i].div.height() + spacing});
 					}
 
 					fixed.t = 1;
@@ -535,11 +571,11 @@ if(jQuery) (function($){
 				for (i in links['l']) {
 					// Move to align with other div
 					if (links['l'][i] == 'l') {
-						this.images[id].div.offset({left: this.images[i].div.offset().left});
+						this.data[id].div.offset({left: this.data[i].div.offset().left});
 					} else {
-						this.images[id].div.offset({
-								left: this.images[i].div.offset().left
-								+ this.images[i].div.width() + spacing});
+						this.data[id].div.offset({
+								left: this.data[i].div.offset().left
+								+ this.data[i].div.width() + spacing});
 					}
 
 					fixed.l = 1;
@@ -552,23 +588,23 @@ if(jQuery) (function($){
 				for (i in links['r']) {
 					// Determine bottom position
 					if (links['r'][i] == 'l') {
-						pos = this.images[i].div.offset().left - spacing;
+						pos = this.data[i].div.offset().left - spacing;
 					} else {
-						pos = this.images[i].div.offset().left + this.images[i].div.width();
+						pos = this.data[i].div.offset().left + this.data[i].div.width();
 					}
 
 					// Resize if top fixed or resizing from bottom, else move
 					if (fixed.l || (direction && direction.search(/r/) !== -1)) {
-						var width = pos - this.images[id].div.offset().left;
-						this.images[id].div.width(width);
+						var width = pos - this.data[id].div.offset().left;
+						this.data[id].div.width(width);
 
 						// Resize right if fixed ratio
-						if (this.images[id].image.format === 'ratio') {
-							this.images[id].div.height(width / this.images[id].ratio);
+						if (this.data[id].format === 'ratio') {
+							this.data[id].div.height(width / this.data[id].ratio);
 							fixed.r = 1;
 						}
 					} else {
-						this.images[id].div.offset({left: pos - this.images[id].div.width()});
+						this.data[id].div.offset({left: pos - this.data[id].div.width()});
 					}
 
 					fixed.r = 1;
@@ -580,23 +616,23 @@ if(jQuery) (function($){
 				for (i in links['b']) {
 					// Determine bottom position
 					if (links['b'][i] == 't') {
-						pos = this.images[i].div.offset().top - spacing;
+						pos = this.data[i].div.offset().top - spacing;
 					} else {
-						pos = this.images[i].div.offset().top + this.images[i].div.height();
+						pos = this.data[i].div.offset().top + this.data[i].div.height();
 					}
 
 					// Resize if top fixed or resizing from bottom, else move
 					if (fixed.t || (direction && direction.search(/b/) !== -1)) {
-						var height = pos - this.images[id].div.offset().top;
-						this.images[id].div.height(height);
+						var height = pos - this.data[id].div.offset().top;
+						this.data[id].div.height(height);
 
 						// Resize right if fixed ratio
-						if (this.images[id].image.format === 'ratio') {
-							this.images[id].div.width(height * this.images[id].ratio);
+						if (this.data[id].format === 'ratio') {
+							this.data[id].div.width(height * this.data[id].ratio);
 							fixed.r = 1;
 						}
 					} else {
-						this.images[id].div.offset({top: pos - this.images[id].div.height()});
+						this.data[id].div.offset({top: pos - this.data[id].div.height()});
 					}
 
 					fixed.b = 1;
@@ -615,9 +651,9 @@ if(jQuery) (function($){
 		var i, height, maxHeight = 150;
 
 		for (i in this.images) {
-			var test = this.images[i].div.height() + this.images[i].div.offset().top;
-			maxHeight = Math.max(this.images[i].div.height()
-					+ this.images[i].div.offset().top, maxHeight);
+			var test = this.data[i].div.height() + this.data[i].div.offset().top;
+			maxHeight = Math.max(this.data[i].div.height()
+					+ this.data[i].div.position().top, maxHeight);
 		}
 
 		if (finalise || maxHeight > this.divs.pad.height()) {
@@ -629,22 +665,22 @@ if(jQuery) (function($){
 	 * Adjust the styling on the div, so that the background image matches the
 	 * image format.
 	 */
-	function adjustStyling(image) {
-		switch(image.image.format) {
+	function adjustStyling(id) {
+		switch(this.images[id].format) {
 			case 'crop':
-				image.div
-						.css('background-position', (image.image.position[0] === -1 
-						? 'center' : image.image.position[0] + 'px') + ' '
-						+ (image.image.position[1] === -1 ? 'center' 
-						: image.image.position[1] + 'px'));
-				if (image.image.scale !== -1) {
-				image.div
-						.css('background-size', (image.image.size[0] * image.image.scale)
-						+ 'px ' + (image.image.size[1] * image.image.scale) + 'px');
+				this.data[id].div
+						.css('background-position', (this.images[id].offset[0] === -1 
+						? 'center' : this.images[id].offset[0] + 'px') + ' '
+						+ (this.images[id].offset[1] === -1 ? 'center' 
+						: this.images[id].offset[1] + 'px'));
+				if (this.images[id].scale !== -1) {
+				this.data[id].div
+						.css('background-size', (this.images[id].size[0] * this.images[id].scale)
+						+ 'px ' + (this.images[id].size[1] * this.images[id].scale) + 'px');
 					break;
 				}
 			case 'ratio':
-				image.div.css('background-size', 'cover');
+				this.data[id].div.css('background-size', 'cover');
 				break;
 		}
 	}
@@ -653,8 +689,8 @@ if(jQuery) (function($){
 	 * Updates the stored image data
 	 */
 	function updateImageData(id) {
-		var image = this.images[id].image;
-		var div = this.images[id].div;
+		var image = this.images[id];
+		var div = this.data[id].div;
 
 		// Update image details
 		// Position
@@ -674,8 +710,8 @@ if(jQuery) (function($){
 				delete image.scale;
 			}
 
-			if (image.position) {
-				delete image.position;
+			if (image.offset) {
+				delete image.offset;
 			}
 		}
 	}
@@ -697,8 +733,88 @@ if(jQuery) (function($){
 		}
 	}
 
-	function padTap(ev) {
-		console.log(ev);
+	function padMove(ev, touch) {
+		//this.divs.settings.append('padMove');
+		if (this.currentImageId !== null) {
+			if (this.currentHandle) {
+				doResize.call(this, this.currentImageId, this.currentHandle,
+						this.initialEvent, ev, touch);
+			} else {
+				doMove.call(this, this.currentImageId, this.currentHandle,
+						this.initialEvent, ev, touch);
+			}
+		}
+	}
+
+	function padEnd(ev, touch) {
+		this.divs.settings.append('padEnd');
+		if (this.currentImageId !== null) {
+			finishAction.call(this, this.currentImageId, this.currentHandle,
+					this.initialEvent, ev);
+
+			this.currentImageId = null;
+			this.currentHandle = null;
+			this.initialEvent = null;
+
+			//console.log(this.images)
+			//console.log(this.getData());
+		}
+	}
+
+	function padStart(ev, touch) {
+		//console.log('startTap');
+		//console.log(ev);
+		var target = $(ev.target);
+		var id, handle;
+
+		//console.log('test');
+
+		// Find
+		do {
+			//console.log(target);
+			// Reached an image or pointer
+			if ((id = target.data('arrangerImageId')) !== undefined) {
+				//console.log('id for start is ' + id);
+				break;
+			}
+
+			// Reached pad
+			if (target.is(this.divs.pad)) {
+				return;
+			}
+		} while (target = target.parent());
+
+		//console.log('fin');
+
+		this.currentImageId = id;
+
+		//this.initialEvent = ev;
+		this.initialEvent = {
+			ev: ev,
+			/** @todo File bug report
+			 * touch.offset currently seems to be the offset relative to the original
+			 * target rather than the bound target as is the target
+			 * offset: touch.offset,
+			 */
+			offset: touch.position,
+			width: this.data[id].div.width(),
+			height: this.data[id].div.height(),
+			pos: this.data[id].div.offset()
+			//pos: this.data[id].div.position()
+			//pos: {
+			//	left: this.data[id].div.offsetLeft,
+			//	top: this.data[id].div.offsetTop
+			//}
+		};
+
+
+		// See if we have a handle
+		if (handle = target.data('arrangerHandle')) {
+			this.currentHandle = handle;
+		}
+
+		//console.log('id ' + id + ', handle ' + handle);
+
 		this.divs.settings.append(ev.type);
 	}
 
@@ -710,6 +826,7 @@ if(jQuery) (function($){
 		var i, j;
 
 		this.images = [];
+		this.data = [];
 		this.divs = {};
 
 		/**
@@ -719,9 +836,9 @@ if(jQuery) (function($){
 			actions: [],
 		}, options);
 
-		console.log('making arranger');
-		console.log(div);
-		console.log(this.options);
+		//console.log('making arranger');
+		//console.log(div);
+		//console.log(this.options);
 
 		this.events = {
 			preMove: [],
@@ -730,6 +847,9 @@ if(jQuery) (function($){
 			finishResize: [],
 			finishAction: []
 		};
+
+		this.currentImageId = null;
+		this.currentHandle = null;
 
 		// Add events from options into events
 		for (i in this.events) {
@@ -751,16 +871,20 @@ if(jQuery) (function($){
 		// Create settings and placer divs
 		div.append(this.divs.settings = $('<div class="settings"></div>'));
 		div.append(this.divs.pad = $('<div class="pad"></div>'));
+		this.divs.div = div;
 
 		createSettingsHTML.call(this);
 
-		this.divs.pad.bind('tapstart', padTap.bind(this));
-		this.divs.pad.bind('tapmove', padTap.bind(this));
-		this.divs.pad.bind('tapend', padTap.bind(this));
-
-		//div.resizable();
+		this.divs.pad.bind('tapstart', padStart.bind(this));
+		this.divs.pad.bind('tapmove', padMove.bind(this));
+		this.divs.pad.bind('tapend', padEnd.bind(this));
 
 		if (this.options.images) {
+			if (this.options.percent) {
+				// Scale images
+				unrelativisePositions.call(this, this.options.images)
+			}
+
 			this.addImage(this.options.images);
 		}
 	}
@@ -787,21 +911,22 @@ if(jQuery) (function($){
 		 *              size.
 		 */
 		addImage: function(images) {
-			console.log('addImage called');
-			console.log(images);
+			//console.log('addImage called');
+			//console.log(images);
 			if (!(images instanceof Array)) {
 				images = [images];
 			}
 
 			var i;
 			for (i in images) {
+				console.log('image ' + i + ' box is ' + images[i].box);
 				// Make sure we have an object and a href; if not, ignore
 				if (images[i] instanceof Object && images[i].href) {
-					console.log('have an image ' + images[i].href);
+					//console.log('have an image ' + images[i].href);
 					// Add the image to the arranger
 					var id = this.images.length;
-					var image = {
-						image: images[i],
+					this.images[id] = images[i];
+					this.data[id] = {
 						links: {
 							l: {},
 							r: {},
@@ -810,77 +935,96 @@ if(jQuery) (function($){
 						}
 					};
 
-					this.divs.pad.append((image.div = $('<div '
+					//console.log('Added image ' + id);
+
+					this.divs.pad.append((this.data[id].div = $('<div '
 							+ 'style="background: url(\'' + images[i].href + '\');' 
 							+ 'background-repeat: no-repeat;"></div>')
-							.bind('tapstart', startAction.bind(this, id, doMove, null))));
+							.attr('data-arranger-image-id', id)
+							.data('arrangerImageId', id)
+							));
 
 					/// @todo Get image size?
 					// this would not be related to the actual image size, but the size
 					// of the div, so can't get the image ratio off of it.
-					console.log(image);
-					if (image.image.width && image.image.height) {
-						image.image.size = [image.image.width, image.image.height];
-					} else if (image.image.box) {
-						image.image.size = image.image.box;
+					//console.log(image);
+					if (this.images[id].width && this.images[id].height) {
+						this.images[id].size = [this.images[id].width, this.images[id].height];
+					} else if (this.images[id].box) {
+						this.images[id].size = this.images[id].box;
 					}
 
 					// Determine ratio
-					image.ratio = image.image.size[0] / image.image.size[1];
+					this.data[id].ratio = this.images[id].size[0] / this.images[id].size[1];
 
-					if (!image.image.box) {
+					if (!this.images[id].box) {
+						console.log('using size to set box');
 						/// @todo ensure size is not larger than the current pad
-						image.image.box = [image.image.size[0], image.image.size[1]];
+						this.images[id].box = [this.images[id].size[0], this.images[id].size[1]];
 					}
 					
 					// Best guess format
-					if (!image.image.format) {
-						if (!image.image.scale && !image.image.position) {
-							image.image.format = 'ratio';
+					if (!this.images[id].format) {
+						if (!this.images[id].scale && !this.images[id].offset) {
+							this.images[id].format = 'ratio';
 						} else {
-							image.image.format = 'crop';
+							this.images[id].format = 'crop';
 						}
 					}
 
-					// Fill in the blanks
-					if (!image.image.scale) {
-						image.image.scale = -1;
+					if (!this.images[id].position) {
+						this.images[id].position = [0, 0];
 					}
 
-					if (!image.image.position) {
-						image.image.position = [-1, -1];
+					// Fill in the blanks
+					console.log(id + ' image format is ' + this.images[id].format);
+					if (this.images[id].format == 'crop') {
+						if (!this.images[id].scale) {
+							this.images[id].scale = -1;
+						}
+
+						if (!this.images[id].offset) {
+							this.images[id].offset = [-1, -1];
+						}
 					}
 
 					// Apply initial size
-					image.div.width(images[i].box[0]);
-					image.div.height(images[i].box[1]);
+					console.log('setting dimensions for ' + id + ' to '
+							+ images[i].box[0] + ' x ' + images[i].box[1]);
+					this.data[id].div.width(images[i].box[0]);
+					this.data[id].div.height(images[i].box[1]);
+
+					console.log('setting position for ' + id + ' to '
+							+ images[i].position[0] + ' x ' + images[i].position[1]);
+					var offset = this.divs.pad.offset();
+					this.data[id].div.offset({
+						left: offset.left + images[i].position[0],
+						top: offset.top + images[i].position[1]
+					});
 
 					// Add format styling
-					adjustStyling.call(this, image);
+					adjustStyling.call(this, id);
 
 					// Add indicators and sizers to image div
 					var s;
 
 					for (s in indicators) {
-						image.div.append(image[indicators[s]] = $('<div class="' + indicators[s]
+						this.data[id].div.append(this.data[id][indicators[s]] = $('<div class="' + indicators[s]
 							+ '"></div>')
 						);
 					}
 
 					for (s in sizers) {
-						image.div.append(image[sizers[s]] = $('<div class="' + sizers[s]
+						this.data[id].div.append(this.data[id][sizers[s]] = $('<div class="' + sizers[s]
 							+ '"></div>')
-							.mousedown(startAction.bind(this, id, doResize, sizers[s]))
-							/* @todo Add touch events
-							.bind('touchstart', )
-							*/
+							.data('arrangerImageId', id)
+							.data('arrangerHandle', sizers[s])
 						);
 					}
-
-					// Store information
-					this.images[id] = image;
 				}
 			}
+
+			resizeArranger.call(this, true);
 		},
 
 		/**
@@ -896,17 +1040,17 @@ if(jQuery) (function($){
 
 			// Go through images and find image to delete
 			for (i in this.images) {
-				if (this.images[i].image.id && this.images[i].image.id === id) {
+				if (this.data[i].id && this.data[i].id === id) {
 					// Go through and delete references in links
-					for (l in this.images[i].links) {
-						links = this.images[i].links[l];
+					for (l in this.data[i].links) {
+						links = this.data[i].links[l];
 						for (j in links) {
-							delete this.images[j].links[links[j]][id];
+							delete this.data[j].links[links[j]][id];
 						}
 					}
 
 					// Delete image
-					this.images[i].div.remove();
+					this.data[i].div.remove();
 
 					delete this.images[i];
 
@@ -929,41 +1073,6 @@ if(jQuery) (function($){
 		 *       Math.round everywhere
 		 */
 		getData: function() {
-			// Store the minimum x and y values so can start the values from 0,0
-			var minX = -1, minY = -1;
-
-			var images = [];
-
-			var i, offset, div;
-
-			for (i in this.images) {
-				images[i] = this.images[i].image;
-
-				updateImageData.call(this, i);
-
-				// Check and set new minimum x and y values
-				if (minX === -1 || images[i].position[0] < minX) {
-					minX  = images[i].position[0];
-				}
-
-				if (minY === -1 || images[i].position[1] < minY) {
-					minY  = images[i].position[1];
-				}
-			}
-			
-			// Zero positions if not 0 anyway
-			if (minX > 0 || minY > 0) {
-				for (i in images) {
-					if (minX > 0) {
-						images[i].position[0] -= minX;
-					}
-
-					if (minY > 0) {
-						images[i].position[1] -= minY;
-					}
-				}
-			}
-			
 			return images;
 		},
 
@@ -978,9 +1087,7 @@ if(jQuery) (function($){
 		 *        finishResize Run after a resize event
 		 *        finishAction Run after any kind of change to an image
 		 * @param func {function} Function to be called. Function will be passed
-		 *        the image data as the only parameter. Note that the image
-		 *        positions will not be relative from [0,0], but from [0,0] of the
-		 *        pad, hence might be different from when @see getData() is called.
+		 *        the images data as the only parameter.
 		 *
 		 * @retval true Bind was successful
 		 * @retval false Bind wasn't successfull (either event doesn't exist or
@@ -1015,24 +1122,39 @@ if(jQuery) (function($){
 	};
 
 	$.extend($.fn, {
+		/**
+		 * JQuery Image arranger. Used to arrange images into a nice layout.
+		 * Can be called in one of three ways. To initialise an arranger on a
+		 * JQueryDOMObject, call it passing an Object containing the options as the
+		 * cmd parameter. To retrieve a reference to the Arranger object on a
+		 * JQueryDOMObject, call it with no parameters. To call a function of the
+		 * associated Arranger, call it passing the string name of the function to
+		 * call. Any additional parameters will be passed to the called function.
+		 *
+		 * @param cmd {Object|String|Undefined} An object of options @see Arranger,
+		 *        a string indentifier of a function to run @see
+		 *        Arranger.prototype, or nothing (undefined) to retrieve the
+		 *        Arranger associated with a JQueryDOMObject.
+		 */
 		arranger: function(cmd) {
-			console.log('arranger called');
+			var arranger;
+			console.log('arranger.js called');
 			console.log(cmd);
 			if (cmd instanceof Object) {
-				console.log('have an object');
+				//console.log('have an object');
 				$(this).each(function() {
-					console.log('in each');
+					//console.log('in each');
 					if (!$(this).data(dataKey)
 							|| !($(this).data(dataKey) instanceof Arranger)) {
-						console.log('making arranger');
+						//console.log('making arranger');
 						$(this).data(dataKey, new Arranger($(this), cmd));
 					}
 				});
 			} else if (typeof cmd == "string") {
-				if ($(this).data(dataKey) && $(this).data(dataKey) instanceof Arranger
-						&& $(this).data(dataKey)[cmd]) {
+				if ((arranger = $(this).data(dataKey)) && arranger instanceof Arranger
+						&& arranger[cmd]) {
 					var args = Array.prototype.slice.call(arguments, 1);
-					$(this).data(dataKey)[cmd].apply($(this).data(dataKey), args);
+					arranger[cmd].apply(arranger, args);
 				}
 			} else if (cmd === undefined) {
 				return $(this).data(dataKey);
