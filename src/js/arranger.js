@@ -82,7 +82,6 @@ if(jQuery) (function($){
 
 	function doMove(id, direction, initial, ev, touch) {
 		//console.log('doMove called');
-		this.divs.settings.html('doMove called');
 
 		if (ev) {
 			//console.log('doMove called with event');
@@ -716,7 +715,7 @@ if(jQuery) (function($){
 						}
 					}
 				} else if (newDimensions.dimension[0] !== -1) {
-					ratioDim = newDimensions.dimension[0] * this.data[id].ratio;
+					ratioDim = newDimensions.dimension[0] / this.data[id].ratio;
 					var dimension = (newDimensions.dimension[1] !== -1 ?
 							newDimensions.dimension[1] : currentDimensions.dimension[1]);
 					if (ratioDim !== dimension) {
@@ -786,11 +785,14 @@ if(jQuery) (function($){
 	function adjustStyling(id) {
 		switch(this.images[id].format) {
 			case 'crop':
+				console.log('got crop image');
+				console.log(this.images[id]);
 				this.data[id].div
-						.css('background-position', (this.images[id].offset[0] === -1 
+						.css('background-position', ((!this.images[id].offset
+						|| this.images[id].offset[0] === -1)
 						? 'center' : this.images[id].offset[0] + 'px') + ' '
-						+ (this.images[id].offset[1] === -1 ? 'center' 
-						: this.images[id].offset[1] + 'px'));
+						+ ((!this.images[id].offset || this.images[id].offset[1] === -1)
+						? 'center' : this.images[id].offset[1] + 'px'));
 				if (this.images[id].scale !== -1) {
 				this.data[id].div
 						.css('background-size', (this.images[id].size[0] * this.images[id].scale)
@@ -851,6 +853,48 @@ if(jQuery) (function($){
 		}
 	}
 
+	function toggleFormat(id, ev) {
+		console.log('toggleFormat called');
+		if (this.images[id]) {
+			if (ev && ev.preventDefault) {
+				if (ev.isDefaultPrevented()) {
+					return;
+				}
+
+				ev.preventDefault();
+			}
+
+			if (this.images[id].format == 'crop') {
+				this.images[id].format = 'ratio';
+				this.data[id].div.removeClass('crop');
+
+				console.log(this.images[id]);
+				console.log(this.data[id]);
+
+				// Adjust box to correct ratio
+				var diffY = Math.round(this.data[id].div.width() / this.data[id].ratio) - this.data[id].div.height(),
+						diffX = Math.round(this.data[id].div.height() * this.data[id].ratio) - this.data[id].div.width();
+
+				// Don't adjust if we don't need to
+				if (diffX) {
+					if (Math.abs(diffX) > Math.abs(diffY)) {
+						this.data[id].div.height(this.data[id].div.height() + diffY);
+					} else {
+						this.data[id].div.width(this.data[id].div.width() + diffX);
+					}
+				}
+
+				// Update data
+				updateImageData.call(this, id);
+			} else {
+				this.images[id].format = 'crop';
+				this.data[id].div.addClass('crop');
+			}
+
+			adjustStyling.call(this, id);
+		}
+	}
+
 	function padMove(ev, touch) {
 		//this.divs.settings.append('padMove');
 		if (this.currentImageId !== null) {
@@ -865,7 +909,6 @@ if(jQuery) (function($){
 	}
 
 	function padEnd(ev, touch) {
-		this.divs.settings.append('padEnd');
 		if (this.currentImageId !== null) {
 			finishAction.call(this, this.currentImageId, this.currentHandle,
 					this.initialEvent, ev);
@@ -886,6 +929,13 @@ if(jQuery) (function($){
 		var id, handle;
 
 		//console.log('test');
+		if (ev && ev.preventDefault) {
+			if (ev.isDefaultPrevented()) {
+				return;
+			}
+
+			ev.preventDefault();
+		}
 
 		// Find
 		do {
@@ -932,8 +982,6 @@ if(jQuery) (function($){
 		}
 
 		//console.log('id ' + id + ', handle ' + handle);
-
-		this.divs.settings.append(ev.type);
 	}
 
 	/** Prototype for the arranger object
@@ -947,11 +995,17 @@ if(jQuery) (function($){
 		this.data = [];
 		this.divs = {};
 
+		// Next added image positions
+		this.nextX = 0;
+		this.nextY = 0;
+
 		/**
 		 * @prop actions {Array} 
 		 */
 		this.options = $.extend({
 			actions: [],
+			nextStep: 30,
+			addedImagePercentage: 25
 		}, options);
 
 		//console.log('making arranger');
@@ -1080,9 +1134,12 @@ if(jQuery) (function($){
 					this.data[id].ratio = this.images[id].size[0] / this.images[id].size[1];
 
 					if (!this.images[id].box) {
-						console.log('using size to set box');
+						var width = Math.min(this.divs.pad.width(), this.divs.pad.width()
+								* this.options.addedImagePercentage / 100);
+						// Set size based on a certain percentage of the window
+						this.images[id].box = [width, width / this.data[id].ratio];
 						/// @todo ensure size is not larger than the current pad
-						this.images[id].box = [this.images[id].size[0], this.images[id].size[1]];
+						//this.images[id].box = [this.images[id].size[0], this.images[id].size[1]];
 					}
 					
 					// Best guess format
@@ -1095,11 +1152,17 @@ if(jQuery) (function($){
 					}
 
 					if (!this.images[id].position) {
-						this.images[id].position = [0, 0];
+						// If the image will be off the end of the pad, restart the X
+						if (this.nextX + this.images[id].box[0] > this.divs.pad.width()) {
+							this.nextX = 0;
+						}
+						this.images[id].position = [this.nextX, this.nextY];
+						this.nextX += this.options.nextStep;
+						this.nextY += this.options.nextStep;
 					}
 
 					// Fill in the blanks
-					console.log(id + ' image format is ' + this.images[id].format);
+					//console.log(id + ' image format is ' + this.images[id].format);
 					if (this.images[id].format == 'crop') {
 						if (!this.images[id].scale) {
 							this.images[id].scale = -1;
@@ -1111,13 +1174,13 @@ if(jQuery) (function($){
 					}
 
 					// Apply initial size
-					console.log('setting dimensions for ' + id + ' to '
-							+ images[i].box[0] + ' x ' + images[i].box[1]);
+					//console.log('setting dimensions for ' + id + ' to '
+					//		+ images[i].box[0] + ' x ' + images[i].box[1]);
 					this.data[id].div.width(images[i].box[0]);
 					this.data[id].div.height(images[i].box[1]);
 
-					console.log('setting position for ' + id + ' to '
-							+ images[i].position[0] + ' x ' + images[i].position[1]);
+					//console.log('setting position for ' + id + ' to '
+					//		+ images[i].position[0] + ' x ' + images[i].position[1]);
 					var offset = this.divs.pad.offset();
 					this.data[id].div.offset({
 						left: offset.left + images[i].position[0],
@@ -1143,6 +1206,17 @@ if(jQuery) (function($){
 							.data('arrangerHandle', sizers[s])
 						);
 					}
+
+					// Add settings buttons
+					this.data[id].div.append(this.data[id].settings = $('<div class="'
+							+ 'settings"></div>')
+							.append(this.data[id].crop = $('<div class="crop"></div>')
+							.click(toggleFormat.bind(this, id))
+							.bind('tapstart', function(ev) {
+								ev.preventDefault();
+							}))
+							//.append(this.data[id].crop = $('<div class="crop"></div>'))
+							);
 				}
 			}
 
@@ -1260,8 +1334,8 @@ if(jQuery) (function($){
 		 */
 		arranger: function(cmd) {
 			var arranger;
-			console.log('arranger.js called');
-			console.log(cmd);
+			//console.log('arranger.js called');
+			//console.log(cmd);
 			if (cmd instanceof Object) {
 				//console.log('have an object');
 				$(this).each(function() {

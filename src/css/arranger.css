@@ -1,84 +1,125 @@
+
+@buttonSize: 30px;
+
 .arranger {
-	border: solid 1px #000;
 	width: 80%;
 	min-height: 200px;
 
 	> div.pad {
 		position: relative;
+		padding: 0px;
+		background-color: rgba(0, 0, 0, 0.02);
 
 		> div {
-		position: absolute;
-		padding: 0px;
-		cursor: move;
-		border: solid 1px #000;
+			position: absolute;
+			padding: 0px;
+			cursor: move;
+			padding: 0px;
+
+			.settings {
+				font-size: 20px;
+				font-family: "dashicons";
+				position: absolute;
+				top: 50%;
+				top: calc(50% - 5px);
+				left: 50%;
+				left: calc(50% - 10px);
+				margin: 0px;
+				padding: 0px;
+
+				.crop {
+					cursor: pointer;
+					padding: 0px;
+
+					&:before {
+						padding: 5px;
+						content: "\f165";
+						background-color: rgba(255, 255, 255, 0.5);
+					}
+
+					&:hover {
+						background-color: rgba(255, 255, 255, 0.8);
+					}
+				}
+			}
+
+			&.crop .settings .crop:before {
+				content: "\f211";
+			}
+
+			.t, .r, .b, .l {
+				padding: 0px;
+				position: absolute;
+
+				&.toLink {
+					background-color: rgba(0, 255, 0, 0.4);
+				}
+			}
+
+			.t, .b {
+				width: 100%;
+				height: 10px;
+			}
+
+			.l, .r {
+				height: 100%;
+				width: 10px
+			}
+
+			.t, .l {
+				top: 0px;
+				left: 0px;
+			}
+
+			.r, .b {
+				right: 0px;
+				bottom: 0px;
+			}
+
+
+			.tl, .br, .bl, .tr {
+				padding: 0px;
+				position: absolute;
+				width: @buttonSize;
+				height: @buttonSize;
+				background-color: rgba(255, 255, 255, .1);
+			}
+
+			.tl, .tr {
+				top: 0px;
+			}
+
+			.bl, .br {
+				bottom: 0px;
+			}
+
+			.tl, .bl {
+				left: 0px;
+			}
+
+			.tr, .br {
+				right: 0px;
+			}
+
+			.tl {
+				cursor: nw-resize;
+			}
+
+			.tr {
+				cursor: ne-resize;
+			}
+
+			.br {
+				cursor: se-resize;
+			}
+
+			.bl {
+				cursor: sw-resize;
+			}
 		}
 	}
 
-	.t, .r, .b, .l {
-		position: absolute;
-
-	&.toLink {
-		background-color: rgba(0, 255, 0, 0.4);
-	}
-	}
-
-	.t, .b {
-		width: 100%;
-		height: 10px;
-	}
-
-	.l, .r {
-		height: 100%;
-		width: 10px
-	}
-
-	.t, .l {
-		top: 0px;
-		left: 0px;
-	}
-
-	.r, .b {
-		right: 0px;
-		bottom: 0px;
-	}
-
-
-	.tl, .br, .bl, .tr {
-		position: absolute;
-		width: 30px;
-		height: 30px;
-		background-color: rgba(255, 255, 255, .1);
-	}
-
-	.tl, .tr {
-		top: 0px;
-	}
-
-	.bl, .br {
-		bottom: 0px;
-	}
-
-	.tl, .bl {
-		left: 0px;
-	}
-
-	.tr, .br {
-		right: 0px;
-	}
-
-	.tl {
-		cursor: nw-resize;
-	}
-
-	.tr {
-		cursor: ne-resize;
-	}
-
-	.br {
-		cursor: se-resize;
-	}
-
-	.bl {
-		cursor: sw-resize;
+	> div.settings{
+		padding: 0px;
 	}
 }
