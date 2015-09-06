@@ -35,10 +35,6 @@ if(jQuery) (function($){
 		var deltaX = Math.round(touch.position.x - initial.touch.x);
 		var deltaY = Math.round(touch.position.y - initial.touch.y);
 		var delta;
-		var offX = 0, offY = 0;
-
-
-		console.log('Deltas are: ' + deltaX + ', ' + deltaY);
 
 		// If fixed ratio, determine the maximum relative to the image ratio
 		if (this.images[id].format === 'ratio') {
@@ -50,79 +46,41 @@ if(jQuery) (function($){
 
 			// Average out the two deltas
 			var delta = (deltaY + (deltaX * mul)) / 2;
+
+			// Calculated a bounded value of delta for each axis
+			deltaX = mul * Math.min(initial.maxDelta.x,
+					Math.max(initial.minDelta.x, mul * delta));
 			deltaY =  Math.round(delta / this.data[id].ratio);
+			if (initial.maxDelta.y !== undefined) {
+				deltaY = Math.min(initial.maxDelta.y,
+						Math.max(initial.minDelta.y, deltaY));
+			} else {
+				deltaY = Math.max(initial.minDelta.y, deltaY);
+			}
+			deltaY =  Math.round(deltaY * this.data[id].ratio);
+
+			if (deltaX != deltaY) {
+				if (Math.abs(deltaX) < Math.abs(deltaY)) {
+					delta = deltaX;
+				} else {
+					delta = deltaY;
+				}
+			}
+
+			deltaY = Math.round(delta / this.data[id].ratio);
 			deltaX = Math.round(delta * mul);
 
-			//console.log('Using fixed ratio delta ');
-
-			// Check these deltas don't take the image off the screen
-			if (direction.search(/l/) !== -1) {
-				// Calcuate if offset is less than zero
-				offX = initial.pos.left + deltaX;
-			} else if (direction.search(/r/) !== -1) {
-				// Calculate if, relative to the end of the pad, we are off the pad
-				// (on a reversed x-axis)
-				console.log('calculating off the right side of the padness '
-						+ this.divs.pad.width() + ' - (' + initial.pos.left + ' + '
-						+ initial.width + ' + ' + deltaX + ')');
-				offX = this.divs.pad.width()
-						- (initial.pos.left + initial.width + deltaX);
-				console.log('calculating off the right side of the padness '
-						+ this.divs.pad.width() + ' - (' + initial.pos.left + ' + '
-						+ initial.width + ' + ' + deltaX + ') = ' + offX);
-			}
-
-			// Handle y dimension
-			if (direction.search(/t/) !== -1) {
-				offY = initial.pos.top + deltaY;
-				//this.data[id].div.x(
-			} // Ignore the bottom as that will expand
-
-			if (offX < 0 && offY < 0) {
-				// Calculate which side needs to least and go with that
-				if (direction.search(/l/) !== -1) {
-					// Calcuate if offset is less than zero
-					offX = - initial.pos.left;
-				} else if (direction.search(/r/) !== -1) {
-					// Calculate if, relative to the end of the pad, if we are off the pad
-					// (on a reversed x-axis)
-					offX = initial.pos.left + initial.width - this.divs.pad.width();
-				}
-
-				// Handle y dimension
-				if (direction.search(/t/) !== -1) {
-					offY = - initial.pos.top;
-					//this.data[id].div.x(
-				} // Ignore the bottom as that will expand
-
-				if (Math.abs(offX) > Math.abs(offY)) {
-					offY = 0;
-				} else {
-					offX = 0;
-				}
-			}
-			
-			if (offX < 0) {
-				console.log('x off pad with ' + deltaX + ' and (' + deltaY + ')');
-				// subtract off deltaX and match deltaY
-				if (direction.search(/l/) !== -1) {
-					deltaX -= offX;
-				} else {
-					deltaX += offX;
-				}
-				deltaY =  mul * Math.round(deltaX / this.data[id].ratio);
-				console.log('new deltaX ' + deltaX + ' and (' + deltaY + ')');
-			} else if (offY < 0) {
-				console.log('x off pad with ' + deltaX + ' and (' + deltaY + ')');
-				// subtract off deltaY and match deltaX
-				deltaY -= offY;
-				deltaX =  mul * Math.round(deltaY * this.data[id].ratio);
-				console.log('new deltaX ' + deltaX + ' and (' + deltaY + ')');
+		} else {
+			deltaX = Math.min(initial.maxDelta.x,
+					Math.max(initial.minDelta.x, deltaX));
+			if (initial.maxDelta.y !== undefined) {
+				deltaY = Math.min(initial.maxDelta.y,
+						Math.max(initial.minDelta.y, deltaY));
+			} else {
+				deltaY = Math.max(initial.minDelta.y, deltaY);
 			}
 		}
-
-		console.log('offX: ' + offX + ', offY: ' + offY);
-
+		
 		// Handle x dimension
 		if (direction.search(/l/) !== -1) {
 			//console.log('have a left puller');
@@ -180,7 +138,7 @@ if(jQuery) (function($){
 		var deltaX = Math.round(touch.position.x - initial.touch.x);
 		var deltaY = Math.round(touch.position.y - initial.touch.y);
 
-		console.log('deltaX: ' + touch.position.x + ' - ' + initial.touch.x + ' = ' + deltaX);
+		//console.log('deltaX: ' + touch.position.x + ' - ' + initial.touch.x + ' = ' + deltaX);
 
 		//console.log('delta: ' + deltaX + ' : ' + deltaY);
 		//console.log(initial);
@@ -201,7 +159,7 @@ if(jQuery) (function($){
 			top: top
 		});
 
-		console.log(initial.offset.left + ' + ' + deltaX + ' = ' + left);
+		//console.log(initial.offset.left + ' + ' + deltaX + ' = ' + left);
 
 		calculateNewLinks.call(this, id, direction);
 		resizeArranger.call(this);
@@ -858,8 +816,8 @@ if(jQuery) (function($){
 	function adjustStyling(id) {
 		switch(this.images[id].format) {
 			case 'crop':
-				console.log('got crop image');
-				console.log(this.images[id]);
+				//console.log('got crop image');
+				//console.log(this.images[id]);
 				this.data[id].div
 						.css('background-position', ((!this.images[id].offset
 						|| this.images[id].offset[0] === -1)
@@ -1064,23 +1022,25 @@ if(jQuery) (function($){
 			this.initialEvent.maxDelta = {};
 
 			if (handle.search(/l/) !== -1) {
-				this.initialEvent.minDelta.x = -this.initialEvent.pos.x;
-				this.initialEvent.maxDelta.x = this.initialEvent.width; // Add min size
+				this.initialEvent.minDelta.x = -this.initialEvent.pos.left;
+				this.initialEvent.maxDelta.x = this.initialEvent.width
+						- this.options.minSize.width;
 			} else { // right handle
-				this.initialEvent.minDelta.x = -this.initialEvent.width; // Add min size
+				this.initialEvent.minDelta.x = this.options.minSize.width
+						-this.initialEvent.width;
 				this.initialEvent.maxDelta.x = this.divs.pad.width() 
-					- this.initialEvent.pos.x - this.initialEvent.width;
+					- this.initialEvent.pos.left - this.initialEvent.width;
 			}
 
 			if (handle.search(/t/) !== -1) {
-				this.initialEvent.minDelta.y = -this.initialEvent.pos.y;
-				this.initialEvent.maxDelta.y = this.initialEvent.height; // Add min size
+				this.initialEvent.minDelta.y = -this.initialEvent.pos.top;
+				this.initialEvent.maxDelta.y = this.initialEvent.height
+						- this.options.minSize.height;
 			} else { // right handle
-				this.initialEvent.minDelta.y = -this.initialEvent.height; // Add min size
+				this.initialEvent.minDelta.y = this.options.minSize.height
+						- this.initialEvent.height;
 			}
 		}
-
-		//console.log('id ' + id + ', handle ' + handle);
 	}
 
 	/** Prototype for the arranger object
@@ -1104,7 +1064,8 @@ if(jQuery) (function($){
 		this.options = $.extend({
 			actions: [],
 			nextStep: 30,
-			addedImagePercentage: 25
+			addedImagePercentage: 25,
+			minSize: {width: 60, height: 60}
 		}, options);
 
 		//console.log('making arranger');
@@ -1147,9 +1108,9 @@ if(jQuery) (function($){
 		createSettingsHTML.call(this);
 
 		var doc;
-		console.log(this.divs.pad.closest('body'));
+		//console.log(this.divs.pad.closest('body'));
 		if (!((doc = this.divs.pad.closest('body')).length)) {
-			console.log('Couldn\'t find parent body...?');
+			//console.log('Couldn\'t find parent body...?');
 			doc = this.divs.pad;
 		}
 		this.divs.pad.bind('tapstart', padStart.bind(this));
@@ -1196,7 +1157,7 @@ if(jQuery) (function($){
 
 			var i;
 			for (i in images) {
-				console.log('image ' + i + ' box is ' + images[i].box);
+				//console.log('image ' + i + ' box is ' + images[i].box);
 				// Make sure we have an object and a href; if not, ignore
 				if (images[i] instanceof Object && images[i].href) {
 					//console.log('have an image ' + images[i].href);
