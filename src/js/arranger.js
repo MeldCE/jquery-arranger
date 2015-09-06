@@ -22,7 +22,7 @@ if(jQuery) (function($){
 			}
 
 			// Check we have a left mouse button click
-			if (ev.button != 0) {
+			if (!(ev.button === undefined || ev.button === 0)) {
 				return;
 			}
 
@@ -32,11 +32,13 @@ if(jQuery) (function($){
 		// Calculate current delta
 		//var deltaX = Math.round(ev.clientX - initial.ev.clientX);
 		//var deltaY = Math.round(ev.clientY - initial.ev.clientY);
-		var deltaX = Math.round(touch.position.x - initial.offset.x);
-		var deltaY = Math.round(touch.position.y - initial.offset.y);
+		var deltaX = Math.round(touch.position.x - initial.touch.x);
+		var deltaY = Math.round(touch.position.y - initial.touch.y);
 		var delta;
+		var offX = 0, offY = 0;
 
-		//console.log('Deltas are: ' + deltaX + ', ' + deltaY);
+
+		console.log('Deltas are: ' + deltaX + ', ' + deltaY);
 
 		// If fixed ratio, determine the maximum relative to the image ratio
 		if (this.images[id].format === 'ratio') {
@@ -49,18 +51,85 @@ if(jQuery) (function($){
 			// Average out the two deltas
 			var delta = (deltaY + (deltaX * mul)) / 2;
 			deltaY =  Math.round(delta / this.data[id].ratio);
-			deltaX = delta * mul;
+			deltaX = Math.round(delta * mul);
 
 			//console.log('Using fixed ratio delta ');
+
+			// Check these deltas don't take the image off the screen
+			if (direction.search(/l/) !== -1) {
+				// Calcuate if offset is less than zero
+				offX = initial.pos.left + deltaX;
+			} else if (direction.search(/r/) !== -1) {
+				// Calculate if, relative to the end of the pad, we are off the pad
+				// (on a reversed x-axis)
+				console.log('calculating off the right side of the padness '
+						+ this.divs.pad.width() + ' - (' + initial.pos.left + ' + '
+						+ initial.width + ' + ' + deltaX + ')');
+				offX = this.divs.pad.width()
+						- (initial.pos.left + initial.width + deltaX);
+				console.log('calculating off the right side of the padness '
+						+ this.divs.pad.width() + ' - (' + initial.pos.left + ' + '
+						+ initial.width + ' + ' + deltaX + ') = ' + offX);
+			}
+
+			// Handle y dimension
+			if (direction.search(/t/) !== -1) {
+				offY = initial.pos.top + deltaY;
+				//this.data[id].div.x(
+			} // Ignore the bottom as that will expand
+
+			if (offX < 0 && offY < 0) {
+				// Calculate which side needs to least and go with that
+				if (direction.search(/l/) !== -1) {
+					// Calcuate if offset is less than zero
+					offX = - initial.pos.left;
+				} else if (direction.search(/r/) !== -1) {
+					// Calculate if, relative to the end of the pad, if we are off the pad
+					// (on a reversed x-axis)
+					offX = initial.pos.left + initial.width - this.divs.pad.width();
+				}
+
+				// Handle y dimension
+				if (direction.search(/t/) !== -1) {
+					offY = - initial.pos.top;
+					//this.data[id].div.x(
+				} // Ignore the bottom as that will expand
+
+				if (Math.abs(offX) > Math.abs(offY)) {
+					offY = 0;
+				} else {
+					offX = 0;
+				}
+			}
+			
+			if (offX < 0) {
+				console.log('x off pad with ' + deltaX + ' and (' + deltaY + ')');
+				// subtract off deltaX and match deltaY
+				if (direction.search(/l/) !== -1) {
+					deltaX -= offX;
+				} else {
+					deltaX += offX;
+				}
+				deltaY =  mul * Math.round(deltaX / this.data[id].ratio);
+				console.log('new deltaX ' + deltaX + ' and (' + deltaY + ')');
+			} else if (offY < 0) {
+				console.log('x off pad with ' + deltaX + ' and (' + deltaY + ')');
+				// subtract off deltaY and match deltaX
+				deltaY -= offY;
+				deltaX =  mul * Math.round(deltaY * this.data[id].ratio);
+				console.log('new deltaX ' + deltaX + ' and (' + deltaY + ')');
+			}
 		}
+
+		console.log('offX: ' + offX + ', offY: ' + offY);
 
 		// Handle x dimension
 		if (direction.search(/l/) !== -1) {
 			//console.log('have a left puller');
 			// Move x and then resize x
-			this.data[id].div.offset({left: (initial.pos.left + deltaX)});
+			this.data[id].div.offset({left: (initial.offset.left + deltaX)});
+			// Calculate the new width based on the new offset (limited to 0)
 			this.data[id].div.width(initial.width - deltaX);
-			//this.data[id].div.x(
 		} else if (direction.search(/r/) !== -1) {
 			//console.log('have a right puller');
 			this.data[id].div.width(initial.width + deltaX);
@@ -69,7 +138,7 @@ if(jQuery) (function($){
 		// Handle y dimension
 		if (direction.search(/t/) !== -1) {
 			// Move x and then resize x
-			this.data[id].div.offset({top: (initial.pos.top + deltaY)});
+			this.data[id].div.offset({top: (initial.offset.top + deltaY)});
 			this.data[id].div.height(initial.height - deltaY);
 			//this.data[id].div.x(
 		} else if (direction.search(/b/) !== -1) {
@@ -106,29 +175,33 @@ if(jQuery) (function($){
 		 */
 		//var deltaX = Math.round(ev.clientX - initial.ev.clientX);
 		//var deltaY = Math.round(ev.clientY - initial.ev.clientY);
-		//var deltaX = Math.round(touch.offset.x - initial.offset.x);
-		//var deltaY = Math.round(touch.offset.y - initial.offset.y);
-		var deltaX = Math.round(touch.position.x - initial.offset.x);
-		var deltaY = Math.round(touch.position.y - initial.offset.y);
+		//var deltaX = Math.round(touch.offset.x - initial.touch.x);
+		//var deltaY = Math.round(touch.offset.y - initial.touch.y);
+		var deltaX = Math.round(touch.position.x - initial.touch.x);
+		var deltaY = Math.round(touch.position.y - initial.touch.y);
+
+		console.log('deltaX: ' + touch.position.x + ' - ' + initial.touch.x + ' = ' + deltaX);
 
 		//console.log('delta: ' + deltaX + ' : ' + deltaY);
 		//console.log(initial);
-		//console.log(initial.pos.left);
+		//console.log(initial.offset.left);
 
 		// Limit by 0,0 and 100% width bound
 		//console.log(this.divs.pad);
 		//console.log(this.divs.pad.offset());
 		var offset = this.divs.pad.offset();
-		//console.log('max: ' + offset.left + ' vs ' + (initial.pos.left + deltaX));
+		//console.log('max: ' + offset.left + ' vs ' + (initial.offset.left + deltaX));
 		var left = Math.min(offset.left + this.divs.pad.width()
 				- this.data[id].div.width(), Math.max(offset.left,
-				(initial.pos.left + deltaX)));
-		var top = Math.max(offset.top, (initial.pos.top + deltaY));
+				(initial.offset.left + deltaX)));
+		var top = Math.max(offset.top, (initial.offset.top + deltaY));
 
 		this.data[id].div.offset({
 			left: left,
 			top: top
 		});
+
+		console.log(initial.offset.left + ' + ' + deltaX + ' = ' + left);
 
 		calculateNewLinks.call(this, id, direction);
 		resizeArranger.call(this);
@@ -842,14 +915,16 @@ if(jQuery) (function($){
 		var ref = this;
 
 		// Add custom actions
-		for (i in this.actions) {
-			if (!(this.actions[i] instanceof Object) || !this.actions[i].label
-					|| !this.actions[i].func || !this.actions[i].func.call) {
-				continue;
-			}
+		if (this.options.actions) {
+			for (i in this.options.actions) {
+				if (!(this.options.actions[i] instanceof Object) || !this.options.actions[i].label
+						|| !this.options.actions[i].func || !this.options.actions[i].func.call) {
+					continue;
+				}
 
-			this.divs.settings.append($('<button>' + this.actions[i].label
-					+ '</button>').click(function () { this.actions[i].func(ref); }));
+				this.divs.settings.append($('<button>' + this.options.actions[i].label
+						+ '</button>').bind('singletap', this.options.actions[i].func.bind(null, ref)));
+			}
 		}
 	}
 
@@ -896,12 +971,15 @@ if(jQuery) (function($){
 	}
 
 	function padMove(ev, touch) {
+		//console.log('padMove. Current image is: ' + this.currentImageId);
 		//this.divs.settings.append('padMove');
 		if (this.currentImageId !== null) {
 			if (this.currentHandle) {
+				//console.log('running doResize');
 				doResize.call(this, this.currentImageId, this.currentHandle,
 						this.initialEvent, ev, touch);
 			} else {
+				//console.log('running doMove');
 				doMove.call(this, this.currentImageId, this.currentHandle,
 						this.initialEvent, ev, touch);
 			}
@@ -923,7 +1001,7 @@ if(jQuery) (function($){
 	}
 
 	function padStart(ev, touch) {
-		//console.log('startTap');
+		//console.log('padStart');
 		//console.log(ev);
 		var target = $(ev.target);
 		var id, handle;
@@ -964,10 +1042,11 @@ if(jQuery) (function($){
 			 * target rather than the bound target as is the target
 			 * offset: touch.offset,
 			 */
-			offset: touch.position,
+			touch: touch.position,
 			width: this.data[id].div.width(),
 			height: this.data[id].div.height(),
-			pos: this.data[id].div.offset()
+			offset: this.data[id].div.offset(),
+			pos: this.data[id].div.position()
 			//pos: this.data[id].div.position()
 			//pos: {
 			//	left: this.data[id].div.offsetLeft,
@@ -976,9 +1055,29 @@ if(jQuery) (function($){
 		};
 
 
-		// See if we have a handle
+		// See if we have a handle (are resizing)
 		if (handle = target.data('arrangerHandle')) {
 			this.currentHandle = handle;
+
+			// Calculate the minimum and maximum deltas for the handle
+			this.initialEvent.minDelta = {};
+			this.initialEvent.maxDelta = {};
+
+			if (handle.search(/l/) !== -1) {
+				this.initialEvent.minDelta.x = -this.initialEvent.pos.x;
+				this.initialEvent.maxDelta.x = this.initialEvent.width; // Add min size
+			} else { // right handle
+				this.initialEvent.minDelta.x = -this.initialEvent.width; // Add min size
+				this.initialEvent.maxDelta.x = this.divs.pad.width() 
+					- this.initialEvent.pos.x - this.initialEvent.width;
+			}
+
+			if (handle.search(/t/) !== -1) {
+				this.initialEvent.minDelta.y = -this.initialEvent.pos.y;
+				this.initialEvent.maxDelta.y = this.initialEvent.height; // Add min size
+			} else { // right handle
+				this.initialEvent.minDelta.y = -this.initialEvent.height; // Add min size
+			}
 		}
 
 		//console.log('id ' + id + ', handle ' + handle);
@@ -1048,7 +1147,9 @@ if(jQuery) (function($){
 		createSettingsHTML.call(this);
 
 		var doc;
-		if (!((doc = this.divs.pad.closest('document')).length)) {
+		console.log(this.divs.pad.closest('body'));
+		if (!((doc = this.divs.pad.closest('body')).length)) {
+			console.log('Couldn\'t find parent body...?');
 			doc = this.divs.pad;
 		}
 		this.divs.pad.bind('tapstart', padStart.bind(this));
@@ -1211,7 +1312,7 @@ if(jQuery) (function($){
 					this.data[id].div.append(this.data[id].settings = $('<div class="'
 							+ 'settings"></div>')
 							.append(this.data[id].crop = $('<div class="crop"></div>')
-							.click(toggleFormat.bind(this, id))
+							.bind('singletap', toggleFormat.bind(this, id))
 							.bind('tapstart', function(ev) {
 								ev.preventDefault();
 							}))
