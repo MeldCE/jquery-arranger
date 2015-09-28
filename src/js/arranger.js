@@ -1286,6 +1286,70 @@ if(jQuery) (function($){
 		},
 
 		/**
+		 * Updates image in the arranger.
+		 *
+		 * @param images {Array|Object} @see addImage
+		 * @param full {Boolean} If true, any images not in the given images will
+		 *        be deleted.
+		 */
+		updateImages: function(images, full) {
+			var newImages = [];
+			var newData = [];
+			var i, image, currentId;
+			var currentLength = this.images.length;
+			var foundIds = [];
+
+			for (i in images) {
+				currentId = false;
+				image = images[i];
+
+				// Skip false images
+				if (!(image instanceof Object) || !image.href) {
+					continue;
+				}
+
+				// Check to see if we have ids
+				if (image.id) {
+					// Try and find the image
+					for (j = 0; j < this.images.length; j++) {
+						if (this.images[j].id && image.id == this.images[j].id) {
+							currentId = j;
+							break;
+						}
+					}
+				} else {
+					// Try and find the image based on href
+					for (j = 0; j < this.images.length; j++) {
+						if (image.href == this.images[j].href) {
+							currentId = j;
+							break;
+						}
+					}
+				}
+
+				//
+				if (currentId !== false) {
+					// @todo Update the image
+					foundIds.push(currentId);
+				} else {
+					// Add the image
+					this.addImage(image);
+				}
+			}
+
+			// Delete any images not found
+			if (full) {
+				for (i = currentLength - 1; i >= 0; i--) {
+					if (foundIds.indexOf(i) === -1) {
+						this.images.splice(i, 1);
+						this.data[i].div.remove();
+						this.data.splice(i, 1);
+					}
+				}
+			}
+		},
+
+		/**
 		 * Delete image with the given id.
 		 *
 		 * @param id {string} ID of the image to delete.
@@ -1402,10 +1466,14 @@ if(jQuery) (function($){
 				//console.log('have an object');
 				$(this).each(function() {
 					//console.log('in each');
-					if (!$(this).data(dataKey)
+					if (!(arranger = $(this).data(dataKey))
 							|| !($(this).data(dataKey) instanceof Arranger)) {
 						//console.log('making arranger');
 						$(this).data(dataKey, new Arranger($(this), cmd));
+					} else {
+						if (cmd.images) {
+							arranger.updateImages(cmd.images, true);
+						}
 					}
 				});
 			} else if (typeof cmd == "string") {
