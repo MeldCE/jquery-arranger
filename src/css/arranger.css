@@ -33,7 +33,7 @@
 
 					&:before {
 						padding: 5px;
-						content: "\f165";
+						content: "\f211";
 						background-color: rgba(255, 255, 255, 0.5);
 					}
 
@@ -44,7 +44,7 @@
 			}
 
 			&.crop .settings .crop:before {
-				content: "\f211";
+				content: "\f165";
 			}
 
 			.t, .r, .b, .l {
@@ -116,6 +116,10 @@
 			.bl {
 				cursor: sw-resize;
 			}
+		}
+
+		> div:hover {
+			z-index: 1;
 		}
 	}
 

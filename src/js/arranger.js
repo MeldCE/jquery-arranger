@@ -1272,7 +1272,8 @@ if(jQuery) (function($){
 					// Add settings buttons
 					this.data[id].div.append(this.data[id].settings = $('<div class="'
 							+ 'settings"></div>')
-							.append(this.data[id].crop = $('<div class="crop"></div>')
+							.append(this.data[id].crop = $('<div class="crop" '
+									+ 'title="Toggle between fixed ratio and fill/crop"></div>')
 							.bind('singletap', toggleFormat.bind(this, id))
 							.bind('tapstart', function(ev) {
 								ev.preventDefault();

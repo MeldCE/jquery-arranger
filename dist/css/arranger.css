@@ -29,14 +29,14 @@
 }
 .arranger > div.pad > div .settings .crop:before {
   padding: 5px;
-  content: "\f165";
+  content: "\f211";
   background-color: rgba(255, 255, 255, 0.5);
 }
 .arranger > div.pad > div .settings .crop:hover {
   background-color: rgba(255, 255, 255, 0.8);
 }
 .arranger > div.pad > div.crop .settings .crop:before {
-  content: "\f211";
+  content: "\f165";
 }
 .arranger > div.pad > div .t,
 .arranger > div.pad > div .r,
@@ -108,6 +108,9 @@
 }
 .arranger > div.pad > div .bl {
   cursor: sw-resize;
+}
+.arranger > div.pad > div:hover {
+  z-index: 1;
 }
 .arranger > div.settings {
   padding: 0px;
