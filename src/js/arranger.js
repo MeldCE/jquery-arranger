@@ -905,8 +905,6 @@ if(jQuery) (function($){
 
 			if (this.images[id].format == 'crop') {
 				this.images[id].format = 'ratio';
-				this.data[id].div.removeClass('crop');
-
 				console.log(this.images[id]);
 				console.log(this.data[id]);
 
@@ -927,7 +925,6 @@ if(jQuery) (function($){
 				updateImageData.call(this, id);
 			} else {
 				this.images[id].format = 'crop';
-				this.data[id].div.addClass('crop');
 			}
 
 			adjustStyling.call(this, id);
