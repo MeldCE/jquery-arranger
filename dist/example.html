@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0">
+		<script src="lib/js/jquery.js"></script>
+		<script src="lib/js/jquery.mobile-events.js"></script>
+		<script src="js/arranger.js"></script>
+		<script>
+			jQuery(function($) {
+				$('#arranger').arranger({})
+						.arranger('addImage', {
+							href: 'imgs/sunset.jpg',
+							box: [200, 150],
+						})
+						.arranger('addImage', {
+							href: 'imgs/stairs.jpg',
+							box: [200, 150],
+						})
+						.arranger('addImage', {
+							href: 'imgs/fountain.jpg',
+							box: [150, 200],
+							format: 'crop'
+						});
+			});
+		</script>
+		<link rel="stylesheet" href="css/arranger.css">
+	</head>
+	<body>
+		<div id="arranger" class="arranger"></div>
+	</body>
+</html>
