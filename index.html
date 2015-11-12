@@ -32,6 +32,49 @@
 <a id="image-arranger" class="anchor" href="#image-arranger" aria-hidden="true"><span class="octicon octicon-link"></span></a>Image Arranger</h1>
 
 <p>A small package to help arrange images into a nice layout.</p>
+
+<pre><code>jQuery(function($) {
+    $('#arranger').arranger({})
+            .arranger('addImage', {
+                href: 'imgs/sunset.jpg',
+                box: [200, 150],
+            })
+            .arranger('addImage', {
+                href: 'imgs/stairs.jpg',
+                box: [200, 150],
+            })
+            .arranger('addImage', {
+                href: 'imgs/fountain.jpg',
+                box: [150, 200],
+                format: 'crop'
+            });
+});
+</code></pre>
+
+<h2>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h2>
+
+<p><a href="http://meldce.github.io/jquery-arranger/dist/example.html">http://meldce.github.io/jquery-arranger/dist/example.html</a></p>
+
+<h2>
+<a id="arranger-options-object" class="anchor" href="#arranger-options-object" aria-hidden="true"><span class="octicon octicon-link"></span></a>Arranger Options Object</h2>
+
+<pre><code>{
+    actions: [
+        {
+            label: '',
+            func: function(Arranger) {}
+        },
+        ...
+    ],
+</code></pre>
+
+<p>TODO More to come</p>
+
+<h2>
+<a id="arranger-image-object" class="anchor" href="#arranger-image-object" aria-hidden="true"><span class="octicon octicon-link"></span></a>Arranger Image Object</h2>
+
+<p>TODO</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/MeldCE">MeldCE</a></p>
