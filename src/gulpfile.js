@@ -7,35 +7,23 @@ var fs = require('fs');
 var uglify = require('gulp-uglify');
 var cssMinify = require('gulp-mini-css');
 var lessCss = require('gulp-less');
-var replace = require('gulp-replace');
 var jsValidate = require('gulp-jsvalidate');
 var cssValidate = require('gulp-css-validator');
-var insert = require('gulp-insert');
-var shell = require('gulp-shell');
-var inlining = require('gulp-inlining-node-require');
-//var concat = require('gulp-concat');
-var package = require('./package.json');
-//var watchify = require('gulp-watchify');
-//var streamify = require('gulp-streamify');
 var include = require('../../gulp-include');
-var spawn = require('child_process').spawn;
 var stripLine  = require('gulp-strip-line');
-var tar = require('gulp-tar');
-var gzip = require('gulp-gzip');
-var symlink = require('gulp-symlink');
 var del = require('del');
+
 
 var paths = {
 	dist: '../dist/',
 	build: '../build/',
 	ext: {},
-	int: ['example.html', 'img/sunset.jpg'],
+	int: ['example.html', 'imgs/*.jpg', 'css/dashicons.woff'],
 	jsSrc: 'js/*.js',
 	cssSrc: 'css/*.css',
 };
 //paths.albums = path.join(paths.dist, 'albums');
 paths.allJsSrc = include.files(paths.jsSrc);
-console.log(paths.allJsSrc);
 paths.js = path.join(paths.dist, 'js');
 paths.css = path.join(paths.dist, 'css');
 paths.builtCssDir = path.join(paths.build, 'css');
@@ -61,6 +49,22 @@ gulp.task('clean', [], function() {
 gulp.task('validateJs', [], function() {
 	return gulp.src(paths.allJsSrc)
 			.pipe(jsValidate());
+});
+
+gulp.task('jsNoLog', ['validateJs'], function() {
+	return gulp.src(paths.jsSrc)
+			.pipe(include())
+			.pipe(stripLine([
+				/console\.log/
+			]))
+			.pipe(gulp.dest(paths.js))
+			.pipe(uglify({
+				preserveComments: 'some'
+			}))
+			.pipe(rename(function (path) {
+						path.extname = '.min.js'
+					}))
+			.pipe(gulp.dest(paths.js));
 });
 
 gulp.task('js', ['validateJs'], function() {
@@ -134,5 +138,7 @@ gulp.task('watch', function() {
 var defaultTasks = ['css', 'js', 'intFiles'].concat(Object.keys(paths.ext));
 
 gulp.task('one', defaultTasks);
+gulp.task('prod', ['css', 'jsNoLog', 'intFiles'].concat(Object.keys(paths.ext)));
 
 gulp.task('default', defaultTasks.concat(['watch']));
+

@@ -14,7 +14,7 @@ if(jQuery) (function($){
 	}
 
 	function doResize(id, direction, initial, ev, touch) {
-		//console.log('doResize called with direction ' + direction);
+
 
 		if (ev) {
 			if (ev.isDefaultPrevented()) {
@@ -83,13 +83,13 @@ if(jQuery) (function($){
 		
 		// Handle x dimension
 		if (direction.search(/l/) !== -1) {
-			//console.log('have a left puller');
+
 			// Move x and then resize x
 			this.data[id].div.offset({left: (initial.offset.left + deltaX)});
 			// Calculate the new width based on the new offset (limited to 0)
 			this.data[id].div.width(initial.width - deltaX);
 		} else if (direction.search(/r/) !== -1) {
-			//console.log('have a right puller');
+
 			this.data[id].div.width(initial.width + deltaX);
 		}
 
@@ -108,10 +108,10 @@ if(jQuery) (function($){
 	}
 
 	function doMove(id, direction, initial, ev, touch) {
-		//console.log('doMove called');
+
 
 		if (ev) {
-			//console.log('doMove called with event');
+
 			if (ev.isDefaultPrevented()) {
 				return;
 			}
@@ -124,9 +124,9 @@ if(jQuery) (function($){
 			ev.preventDefault();
 		}
 
-		//console.log(initial);
-		//console.log(ev);
-		//console.log(touch);
+
+
+
 
 		// Calculate current delta
 		/* touch.offset is the position relative to the
@@ -138,17 +138,17 @@ if(jQuery) (function($){
 		var deltaX = Math.round(touch.position.x - initial.touch.x);
 		var deltaY = Math.round(touch.position.y - initial.touch.y);
 
-		//console.log('deltaX: ' + touch.position.x + ' - ' + initial.touch.x + ' = ' + deltaX);
 
-		//console.log('delta: ' + deltaX + ' : ' + deltaY);
-		//console.log(initial);
-		//console.log(initial.offset.left);
+
+
+
+
 
 		// Limit by 0,0 and 100% width bound
-		//console.log(this.divs.pad);
-		//console.log(this.divs.pad.offset());
+
+
 		var offset = this.divs.pad.offset();
-		//console.log('max: ' + offset.left + ' vs ' + (initial.offset.left + deltaX));
+
 		var left = Math.min(offset.left + this.divs.pad.width()
 				- this.data[id].div.width(), Math.max(offset.left,
 				(initial.offset.left + deltaX)));
@@ -159,7 +159,7 @@ if(jQuery) (function($){
 			top: top
 		});
 
-		//console.log(initial.offset.left + ' + ' + deltaX + ' = ' + left);
+
 
 		calculateNewLinks.call(this, id, direction);
 		resizeArranger.call(this);
@@ -224,7 +224,7 @@ if(jQuery) (function($){
 		var width = this.divs.pad.width() - 2;
 		var i;
 
-		//console.log('unrelativise with width' + width);
+
 
 		for (i in images) {
 			if (images[i].box) {
@@ -247,7 +247,7 @@ if(jQuery) (function($){
 	}
 
 	function finishAction(id, direction, initial, ev) {
-		//console.log('finishAction called');
+
 
 		if (ev) {
 			if (ev.isDefaultPrevented()) {
@@ -257,18 +257,18 @@ if(jQuery) (function($){
 			ev.preventDefault()
 		}
 	
-		//console.log(this.data[id].div.offset());
+
 
 		calculateNewLinks.call(this, id, direction, true);
-		//console.log(this.data[id].div.offset());
+
 		resizeArranger.call(this, true);
 
-		//console.log(this.data[id].div.offset());
+
 		updateImageData.call(this, id);
 
 		relativisePositions.call(this);
 
-		//console.log(this.data[id].div.offset());
+
 		if (direction === null) {
 			if (this.events.finishMove) {
 				for (i in this.events.finishMove) {
@@ -301,7 +301,7 @@ if(jQuery) (function($){
 	 * @param finalise {boolean} If, true, links will be set.
 	 */
 	function calculateNewLinks(id, direction, finalise) {
-		//console.log('calculateNewLinks called with ' + id + ', ' + direction
+
 		//		+ ', ' + finalise);
 		
 		var i, j, k;
@@ -388,8 +388,8 @@ if(jQuery) (function($){
 				b: offset.top + this.data[i].div.height()
 			};
 
-			//console.log(i);
-			//console.log(cpos);
+
+
 
 			// Horizontal sides
 			if (ipos.t !== -1) {
@@ -541,7 +541,7 @@ if(jQuery) (function($){
 				}
 			}
 
-			//console.log(this.data[id].links);
+
 		}
 	}
 
@@ -557,7 +557,7 @@ if(jQuery) (function($){
 	function actionLinks(id, direction, links) {
 		var i, j, s, pos;
 
-		//console.log('actionLinks called, direction is ' + direction);
+
 
 		var newDimensions = {
 			dimension: [-1, -1],
@@ -568,32 +568,32 @@ if(jQuery) (function($){
 			offset: this.data[id].div.offset()
 		};
 	
-		//console.log(links);
-		//console.log(currentDimensions);
 
-		//console.log('prelink');
-		//console.log('dimension (x x y) ' + newDimensions.dimension[0] + ' x '
+
+
+
+
 		//		+ newDimensions.dimension[1]);
-		//console.log('offset (l x t) ' + newDimensions.offset.left + ' x '
+
 		//		+ newDimensions.offset.top);
 
 		if (links) {
-			//console.log('have links');
-			//console.log(links);
+
+
 
 			// Top
 			if (links['t']) {
 				for (i in links['t']) {
-					//console.log('got top link for ' + i + ': ' + links['t'][i]);
-					//console.log(this.data[i].div.offset());
-					//console.log('w ' + this.data[i].div.width()
+
+
+
 					//		+ ' h ' + this.data[i].div.height());
 					// Move to align with other div
 					if (links['t'][i] == 't') { // Move top to top of linked
-						//console.log('Move top to top side of linked');
+
 						newDimensions.offset.top = this.data[i].div.offset().top;
 					} else { // Move top to bottom of linked
-						//console.log('Move top to bottom side of linked');
+
 						newDimensions.offset.top = this.data[i].div.offset().top
 								+ this.data[i].div.height() + spacing
 					}
@@ -614,10 +614,10 @@ if(jQuery) (function($){
 				for (i in links['l']) {
 					// Move to align with other div
 					if (links['l'][i] == 'l') { // Move left to left side of linked
-						//console.log('Move left to left side of linked');
+
 						newDimensions.offset.left = this.data[i].div.offset().left;
 					} else { // Move left to right side of linked
-						//console.log('Move left to right side of linked');
+
 						newDimensions.offset.left = this.data[i].div.offset().left
 								+ this.data[i].div.width() + spacing
 					}
@@ -642,15 +642,15 @@ if(jQuery) (function($){
 						var offset = (newDimensions.offset.left !== -1 ?
 								newDimensions.offset.left : currentDimensions.offset.left);
 
-						//console.log('in right link');
-						//console.log(offset);
+
+
 
 						if (links['r'][i] == 'l') { // Resize width to line up with left side of linked
-							//console.log('Resize width to line up with left side of linked');
+
 							newDimensions.dimension[0] = this.data[i].div.offset().left
 									- spacing - offset;
 						} else { // Resize width to line up with right side of linked
-							//console.log('Resize width to line up with right side of linked');
+
 							newDimensions.dimension[0] = this.data[i].div.offset().left
 									+ this.data[i].div.width() - offset; 
 						}
@@ -659,11 +659,11 @@ if(jQuery) (function($){
 								newDimensions.dimension[0] : currentDimensions.dimension[0]);
 
 						if (links['r'][i] == 'l') { // Move right to left side of linked
-							//console.log('Move right to left side of linked');
+
 							newDimensions.offset.left = this.data[i].div.offset().left
 									- spacing - dimension;
 						} else { // Move right to right side of linked
-							//console.log('Move right to right side of linked');
+
 							newDimensions.offset.left = this.data[i].div.offset().left
 									+ this.data[i].div.width() - dimension;
 						}
@@ -677,9 +677,9 @@ if(jQuery) (function($){
 			// Bottom
 			if (links['b']) {
 				for (i in links['b']) {
-					//console.log('got bottom link for ' + i + ': ' + links['b'][i]);
-					//console.log(this.data[i].div.offset());
-					//console.log('w ' + this.data[i].div.width()
+
+
+
 					//		+ ' h ' + this.data[i].div.height());
 					// Resize the image if the resizing or the offset has been updated
 					if (newDimensions.offset.top !== -1 
@@ -687,15 +687,15 @@ if(jQuery) (function($){
 						var offset = (newDimensions.offset.top !== -1 ?
 								newDimensions.offset.top : currentDimensions.offset.top);
 
-						//console.log('in bottom link');
-						//console.log(offset);
+
+
 
 						if (links['b'][i] == 't') { // Resize height to line up with top side of linked
-							//console.log('Resize height to line up with top side of linked');
+
 							newDimensions.dimension[1] = this.data[i].div.offset().top
 									- spacing - offset;
 						} else { // Resize height to line up with bottom side of linked
-							//console.log('Resize height to line up with bottom side of linked');
+
 							newDimensions.dimension[1] = this.data[i].div.offset().top
 									+ this.data[i].div.height() - offset; 
 						}
@@ -703,15 +703,15 @@ if(jQuery) (function($){
 						var dimension = (newDimensions.dimension[1] !== -1 ?
 								newDimensions.dimension[1] : currentDimensions.dimension[1]);
 
-						//console.log('in bottom link');
-						//console.log(dimension);
+
+
 
 						if (links['b'][i] == 't') { // Move so bottom is aligned with top side of linked
-							//console.log('Move so bottom is aligned with top side of linked');
+
 							newDimensions.offset.top = this.data[i].div.offset().top
 									- spacing - dimension;
 						} else { // Move so bottom is aligned with bottom side of linked
-							//console.log('Move so bottom is aligned with bottom side of linked');
+
 							newDimensions.offset.top = this.data[i].div.offset().top
 									+ this.data[i].div.height() - dimension;
 						}
@@ -722,10 +722,10 @@ if(jQuery) (function($){
 				}
 			}
 
-			//console.log('unfixed');
-			//console.log('dimension (x x y) ' + newDimensions.dimension[0] + ' x '
+
+
 			//		+ newDimensions.dimension[1]);
-			//console.log('offset (l x t) ' + newDimensions.offset.left + ' x '
+
 			//		+ newDimensions.offset.top);
 
 			// Force correct ratio if we changed a dimension (height priority)
@@ -762,7 +762,7 @@ if(jQuery) (function($){
 				}
 			}
 
-			//console.log(newDimensions);
+
 
 			// Set new values
 			if (newDimensions.dimension[0] !== -1) {
@@ -814,10 +814,12 @@ if(jQuery) (function($){
 	 * image format.
 	 */
 	function adjustStyling(id) {
+		var classes = '';
 		switch(this.images[id].format) {
 			case 'crop':
-				//console.log('got crop image');
-				//console.log(this.images[id]);
+
+
+				classes += ' crop';
 				this.data[id].div
 						.css('background-position', ((!this.images[id].offset
 						|| this.images[id].offset[0] === -1)
@@ -825,15 +827,19 @@ if(jQuery) (function($){
 						+ ((!this.images[id].offset || this.images[id].offset[1] === -1)
 						? 'center' : this.images[id].offset[1] + 'px'));
 				if (this.images[id].scale !== -1) {
-				this.data[id].div
-						.css('background-size', (this.images[id].size[0] * this.images[id].scale)
-						+ 'px ' + (this.images[id].size[1] * this.images[id].scale) + 'px');
+					this.data[id].div
+							.css('background-size', (this.images[id].size[0] * this.images[id].scale)
+							+ 'px ' + (this.images[id].size[1] * this.images[id].scale) + 'px');
 					break;
 				}
 			case 'ratio':
 				this.data[id].div.css('background-size', 'cover');
+				this.data[id].div.css('background-position', 'center');
 				break;
 		}
+
+		this.data[id].div.removeClass('crop');
+		if (classes) this.data[id].div.addClass(classes);
 	}
 
 	/**
@@ -887,7 +893,7 @@ if(jQuery) (function($){
 	}
 
 	function toggleFormat(id, ev) {
-		console.log('toggleFormat called');
+
 		if (this.images[id]) {
 			if (ev && ev.preventDefault) {
 				if (ev.isDefaultPrevented()) {
@@ -901,8 +907,8 @@ if(jQuery) (function($){
 				this.images[id].format = 'ratio';
 				this.data[id].div.removeClass('crop');
 
-				console.log(this.images[id]);
-				console.log(this.data[id]);
+
+
 
 				// Adjust box to correct ratio
 				var diffY = Math.round(this.data[id].div.width() / this.data[id].ratio) - this.data[id].div.height(),
@@ -929,15 +935,15 @@ if(jQuery) (function($){
 	}
 
 	function padMove(ev, touch) {
-		//console.log('padMove. Current image is: ' + this.currentImageId);
+
 		//this.divs.settings.append('padMove');
 		if (this.currentImageId !== null) {
 			if (this.currentHandle) {
-				//console.log('running doResize');
+
 				doResize.call(this, this.currentImageId, this.currentHandle,
 						this.initialEvent, ev, touch);
 			} else {
-				//console.log('running doMove');
+
 				doMove.call(this, this.currentImageId, this.currentHandle,
 						this.initialEvent, ev, touch);
 			}
@@ -953,18 +959,18 @@ if(jQuery) (function($){
 			this.currentHandle = null;
 			this.initialEvent = null;
 
-			//console.log(this.images)
-			//console.log(this.getData());
+
+
 		}
 	}
 
 	function padStart(ev, touch) {
-		//console.log('padStart');
-		//console.log(ev);
+
+
 		var target = $(ev.target);
 		var id, handle;
 
-		//console.log('test');
+
 		if (ev && ev.preventDefault) {
 			if (ev.isDefaultPrevented()) {
 				return;
@@ -975,10 +981,10 @@ if(jQuery) (function($){
 
 		// Find
 		do {
-			//console.log(target);
+
 			// Reached an image or pointer
 			if ((id = target.data('arrangerImageId')) !== undefined) {
-				//console.log('id for start is ' + id);
+
 				break;
 			}
 
@@ -988,7 +994,7 @@ if(jQuery) (function($){
 			}
 		} while (target = target.parent());
 
-		//console.log('fin');
+
 
 		this.currentImageId = id;
 
@@ -1068,9 +1074,9 @@ if(jQuery) (function($){
 			minSize: {width: 60, height: 60}
 		}, options);
 
-		//console.log('making arranger');
-		//console.log(div);
-		//console.log(this.options);
+
+
+
 
 		this.events = {
 			preMove: [],
@@ -1108,9 +1114,9 @@ if(jQuery) (function($){
 		createSettingsHTML.call(this);
 
 		var doc;
-		//console.log(this.divs.pad.closest('body'));
+
 		if (!((doc = this.divs.pad.closest('body')).length)) {
-			//console.log('Couldn\'t find parent body...?');
+
 			doc = this.divs.pad;
 		}
 		this.divs.pad.bind('tapstart', padStart.bind(this));
@@ -1149,18 +1155,18 @@ if(jQuery) (function($){
 		 *              size.
 		 */
 		addImage: function(images) {
-			//console.log('addImage called');
-			//console.log(images);
+
+
 			if (!(images instanceof Array)) {
 				images = [images];
 			}
 
 			var i;
 			for (i in images) {
-				//console.log('image ' + i + ' box is ' + images[i].box);
+
 				// Make sure we have an object and a href; if not, ignore
 				if (images[i] instanceof Object && images[i].href) {
-					//console.log('have an image ' + images[i].href);
+
 					// Add the image to the arranger
 					var id = this.images.length;
 					this.images[id] = images[i];
@@ -1173,7 +1179,7 @@ if(jQuery) (function($){
 						}
 					};
 
-					//console.log('Added image ' + id);
+
 
 					this.divs.pad.append((this.data[id].div = $('<div '
 							+ 'style="background: url(\'' + images[i].href + '\');' 
@@ -1185,7 +1191,7 @@ if(jQuery) (function($){
 					/// @todo Get image size?
 					// this would not be related to the actual image size, but the size
 					// of the div, so can't get the image ratio off of it.
-					//console.log(image);
+
 					if (this.images[id].width && this.images[id].height) {
 						this.images[id].size = [this.images[id].width, this.images[id].height];
 					} else if (this.images[id].box) {
@@ -1224,7 +1230,7 @@ if(jQuery) (function($){
 					}
 
 					// Fill in the blanks
-					//console.log(id + ' image format is ' + this.images[id].format);
+
 					if (this.images[id].format == 'crop') {
 						if (!this.images[id].scale) {
 							this.images[id].scale = -1;
@@ -1236,21 +1242,18 @@ if(jQuery) (function($){
 					}
 
 					// Apply initial size
-					//console.log('setting dimensions for ' + id + ' to '
+
 					//		+ images[i].box[0] + ' x ' + images[i].box[1]);
 					this.data[id].div.width(images[i].box[0]);
 					this.data[id].div.height(images[i].box[1]);
 
-					//console.log('setting position for ' + id + ' to '
+
 					//		+ images[i].position[0] + ' x ' + images[i].position[1]);
 					var offset = this.divs.pad.offset();
 					this.data[id].div.offset({
 						left: offset.left + images[i].position[0],
 						top: offset.top + images[i].position[1]
 					});
-
-					// Add format styling
-					adjustStyling.call(this, id);
 
 					// Add indicators and sizers to image div
 					var s;
@@ -1280,6 +1283,9 @@ if(jQuery) (function($){
 							}))
 							//.append(this.data[id].crop = $('<div class="crop"></div>'))
 							);
+
+					// Add format styling
+					adjustStyling.call(this, id);
 				}
 			}
 
@@ -1461,15 +1467,15 @@ if(jQuery) (function($){
 		 */
 		arranger: function(cmd) {
 			var arranger;
-			//console.log('arranger.js called');
-			//console.log(cmd);
+
+
 			if (cmd instanceof Object) {
-				//console.log('have an object');
+
 				$(this).each(function() {
-					//console.log('in each');
+
 					if (!(arranger = $(this).data(dataKey))
 							|| !($(this).data(dataKey) instanceof Arranger)) {
-						//console.log('making arranger');
+
 						$(this).data(dataKey, new Arranger($(this), cmd));
 					} else {
 						if (cmd.images) {

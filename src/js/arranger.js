@@ -814,10 +814,12 @@ if(jQuery) (function($){
 	 * image format.
 	 */
 	function adjustStyling(id) {
+		var classes = '';
 		switch(this.images[id].format) {
 			case 'crop':
 				//console.log('got crop image');
 				//console.log(this.images[id]);
+				classes += ' crop';
 				this.data[id].div
 						.css('background-position', ((!this.images[id].offset
 						|| this.images[id].offset[0] === -1)
@@ -825,15 +827,19 @@ if(jQuery) (function($){
 						+ ((!this.images[id].offset || this.images[id].offset[1] === -1)
 						? 'center' : this.images[id].offset[1] + 'px'));
 				if (this.images[id].scale !== -1) {
-				this.data[id].div
-						.css('background-size', (this.images[id].size[0] * this.images[id].scale)
-						+ 'px ' + (this.images[id].size[1] * this.images[id].scale) + 'px');
+					this.data[id].div
+							.css('background-size', (this.images[id].size[0] * this.images[id].scale)
+							+ 'px ' + (this.images[id].size[1] * this.images[id].scale) + 'px');
 					break;
 				}
 			case 'ratio':
 				this.data[id].div.css('background-size', 'cover');
+				this.data[id].div.css('background-position', 'center');
 				break;
 		}
+
+		this.data[id].div.removeClass('crop');
+		if (classes) this.data[id].div.addClass(classes);
 	}
 
 	/**
@@ -1249,9 +1255,6 @@ if(jQuery) (function($){
 						top: offset.top + images[i].position[1]
 					});
 
-					// Add format styling
-					adjustStyling.call(this, id);
-
 					// Add indicators and sizers to image div
 					var s;
 
@@ -1280,6 +1283,9 @@ if(jQuery) (function($){
 							}))
 							//.append(this.data[id].crop = $('<div class="crop"></div>'))
 							);
+
+					// Add format styling
+					adjustStyling.call(this, id);
 				}
 			}
 

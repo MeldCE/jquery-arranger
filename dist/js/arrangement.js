@@ -19,20 +19,20 @@ if(jQuery) (function($){
 		var offset = this.div.offset();
 
 		// Add margin and padding to offset
-		//console.log('padding for div is: ' + this.div.css('padding-left') + ' x '
+
 		//		+ this.div.css('padding-top'));
-		//console.log(offset);
+
 		offset.left += parseInt(this.div.css('padding-left'));
 		offset.top += parseInt(this.div.css('padding-top'));
-		//console.log(offset);
+
 
 		var images = this.options.images;
 
 		var imageMaxY, maxY = 0;
 
 		for (i in images) {
-			//console.log('looking for element for image ' + i);
-			//console.log(images[i]);
+
+
 			/// @todo check for best function
 			if (div = this.div.find('[data-id=' + i + ']')) {
 				imageMaxY = 0;
@@ -46,8 +46,8 @@ if(jQuery) (function($){
 
 				// Set box and position
 				if (images[i].box) {
-					//console.log('setting the width to');
-					//console.log(images[i].box[0] / 100 * width);
+
+
 					div.width(images[i].box[0] / 100 * width);
 					div.height(images[i].box[1] / 100 * width);
 					imageMaxY += div.height();
@@ -110,15 +110,15 @@ if(jQuery) (function($){
 		 */
 		arrangement: function(cmd) {
 			var arrangement;
-			console.log('arrangement.js called');
-			console.log(cmd);
+
+
 			if (cmd instanceof Object) {
-				//console.log('have an object');
+
 				$(this).each(function() {
-					//console.log('in each');
+
 					if (!$(this).data(dataKey)
 							|| !($(this).data(dataKey) instanceof Arrangement)) {
-						console.log('making arranger');
+
 						$(this).data(dataKey, new Arrangement($(this), cmd));
 					}
 				});

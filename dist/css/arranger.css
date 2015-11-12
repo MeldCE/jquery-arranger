@@ -13,8 +13,9 @@
   padding: 0px;
 }
 .arranger > div.pad > div .settings {
-  font-size: 20px;
-  font-family: "dashicons";
+  font-family: sans;
+  /*font-size: 20px;
+				font-family: "dashicons";*/
   position: absolute;
   top: 50%;
   top: calc(45%);
@@ -28,15 +29,18 @@
   padding: 0px;
 }
 .arranger > div.pad > div .settings .crop:before {
+  display: inline-block;
   padding: 5px;
-  content: "\f211";
+  /*content: "\f211";*/
+  content: 'x/y';
   background-color: rgba(255, 255, 255, 0.5);
 }
 .arranger > div.pad > div .settings .crop:hover {
   background-color: rgba(255, 255, 255, 0.8);
 }
 .arranger > div.pad > div.crop .settings .crop:before {
-  content: "\f165";
+  /*content: "\f165";*/
+  content: 'x y';
 }
 .arranger > div.pad > div .t,
 .arranger > div.pad > div .r,
