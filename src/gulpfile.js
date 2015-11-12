@@ -18,7 +18,7 @@ var paths = {
 	dist: '../dist/',
 	build: '../build/',
 	ext: {},
-	int: ['example.html', 'imgs/*.jpg', 'css/dashicons.woff'],
+	int: ['example.html', 'imgs/*.jpg'],
 	jsSrc: 'js/*.js',
 	cssSrc: 'css/*.css',
 };
